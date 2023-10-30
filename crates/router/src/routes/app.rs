@@ -424,6 +424,23 @@ impl PaymentMethods {
     }
 }
 
+pub struct UserAccount;
+
+impl UserAccount {
+    pub fn server(state: AppState) -> Scope {
+        web::scope("/users")
+            .app_data(web::Data::new(state))
+            .service(web::resource("").route(web::post().to(user_account_create)))
+            .service(web::resource("/login").route(web::post().to(login_user)))
+        // .service(
+        //     web::resource("/{id}")
+        //         .route(web::get().to(retrieve_merchant_account))
+        //         .route(web::post().to(update_merchant_account))
+        //         .route(web::delete().to(delete_merchant_account)),
+        // )
+    }
+}
+
 pub struct MerchantAccount;
 
 #[cfg(feature = "olap")]

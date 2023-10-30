@@ -877,7 +877,6 @@ diesel::table! {
 diesel::table! {
     use diesel::sql_types::*;
     use crate::enums::diesel_exports::*;
-
     routing_algorithm (algorithm_id) {
         #[max_length = 64]
         algorithm_id -> Varchar,
@@ -893,6 +892,20 @@ diesel::table! {
         algorithm_data -> Jsonb,
         created_at -> Timestamp,
         modified_at -> Timestamp,
+    }
+}
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::enums::diesel_exports::*;
+    users (id) {
+        id -> Int4,
+        #[max_length = 255]
+        merchant_id -> Varchar,
+        name -> Bytea,
+        created_at -> Timestamp,
+        #[max_length = 255]
+        email -> Varchar,
+        password -> Bytea,
     }
 }
 
@@ -925,4 +938,5 @@ diesel::allow_tables_to_appear_in_same_query!(
     refund,
     reverse_lookup,
     routing_algorithm,
+    users,
 );

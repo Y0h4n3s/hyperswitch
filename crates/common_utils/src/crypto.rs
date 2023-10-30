@@ -1,6 +1,10 @@
 //! Utilities for cryptographic algorithms
 use std::ops::Deref;
 
+use argon2::{
+    password_hash::{PasswordHasher, Salt},
+    Argon2 as Argon2Hash,
+};
 use error_stack::{IntoReport, ResultExt};
 use masking::{ExposeInterface, Secret};
 use md5;
@@ -298,6 +302,12 @@ impl DecodeMessage for GcmAes256 {
     }
 }
 
+const ARGON2_SALT: &str = "c2FsdDEyMzQK";
+
+/// Argon2 hash algorithm
+#[derive(Debug)]
+pub struct Argon2;
+
 /// Secure Hash Algorithm 512
 #[derive(Debug)]
 pub struct Sha512;
@@ -312,6 +322,34 @@ pub trait GenerateDigest {
     fn generate_digest(&self, message: &[u8]) -> CustomResult<Vec<u8>, errors::CryptoError>;
 }
 
+impl GenerateDigest for Argon2 {
+    fn generate_digest(&self, message: &[u8]) -> CustomResult<Vec<u8>, errors::CryptoError> {
+        let salt = Salt::from_b64(ARGON2_SALT).map_err(|_| errors::CryptoError::EncodingFailed)?;
+        let argon2 = Argon2Hash::default();
+        Ok(argon2
+            .hash_password(message, salt)
+            .map_err(|_| errors::CryptoError::MessageSigningFailed)?
+            .hash
+            .ok_or(errors::CryptoError::MessageSigningFailed)?
+            .as_bytes()
+            .to_vec())
+    }
+}
+
+impl VerifySignature for Argon2 {
+    fn verify_signature(
+        &self,
+        _secret: &[u8],
+        signature: &[u8],
+        msg: &[u8],
+    ) -> CustomResult<bool, errors::CryptoError> {
+        let hashed = self
+            .generate_digest(msg)
+            .change_context(errors::CryptoError::SignatureVerificationFailed)?;
+        let hashed_digest_into_bytes = hashed.as_slice();
+        Ok(hashed_digest_into_bytes == signature)
+    }
+}
 impl GenerateDigest for Sha512 {
     fn generate_digest(&self, message: &[u8]) -> CustomResult<Vec<u8>, errors::CryptoError> {
         let digest = ring::digest::digest(&ring::digest::SHA512, message);

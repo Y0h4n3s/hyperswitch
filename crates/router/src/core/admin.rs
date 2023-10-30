@@ -5,7 +5,10 @@ use api_models::{
     enums as api_enums, routing as routing_types,
 };
 use common_utils::{
-    crypto::{generate_cryptographically_secure_random_string, OptionalSecretValue},
+    crypto::{
+        generate_cryptographically_secure_random_string, Argon2, Encryptable, GenerateDigest,
+        OptionalSecretValue,
+    },
     date_time,
     ext_traits::{AsyncExt, ConfigExt, Encode, ValueExt},
     pii,
@@ -30,7 +33,7 @@ use crate::{
         self, api,
         domain::{
             self,
-            types::{self as domain_types, AsyncLift},
+            types::{self as domain_types, AsyncLift, TypeEncryption},
         },
         storage::{self, enums::MerchantStorageScheme},
         transformers::{ForeignFrom, ForeignTryFrom},
@@ -45,6 +48,155 @@ pub fn create_merchant_publishable_key() -> String {
         router_env::env::prefix_for_env(),
         Uuid::new_v4().simple()
     )
+}
+
+/// TODO: disallow double email
+
+pub async fn create_user_account(
+    state: AppState,
+    req: api::UserCreate,
+) -> RouterResponse<api::UserResponse> {
+    let db = state.store.as_ref();
+
+    let merchant: api::MerchantAccountResponse = if let Ok(key_store) = db
+        .get_merchant_key_store_by_merchant_id(
+            &req.merchant_account.merchant_id,
+            &db.get_master_key().to_vec().into(),
+        )
+        .await
+        .to_not_found_response(errors::ApiErrorResponse::MerchantAccountNotFound)
+    {
+        db.find_merchant_account_by_merchant_id(&req.merchant_account.merchant_id, &key_store)
+            .await
+            .to_not_found_response(errors::ApiErrorResponse::MerchantAccountNotFound)?
+            .try_into()
+            .change_context(errors::ApiErrorResponse::InternalServerError)?
+    } else {
+        match create_merchant_account(state.clone(), req.merchant_account).await? {
+            service_api::ApplicationResponse::Json(res) => res,
+            _ => return Err(errors::ApiErrorResponse::InternalServerError.into()),
+        }
+    };
+
+    let key_store = db
+        .get_merchant_key_store_by_merchant_id(
+            &merchant.merchant_id,
+            &db.get_master_key().to_vec().into(),
+        )
+        .await
+        .to_not_found_response(errors::ApiErrorResponse::MerchantAccountNotFound)?;
+
+    let password = if let Some(pass) = req.password {
+        pass
+    } else {
+        let pg = passwords::PasswordGenerator::new()
+            .length(12)
+            .numbers(true)
+            .lowercase_letters(true)
+            .uppercase_letters(true)
+            .symbols(true)
+            .spaces(false)
+            .exclude_similar_characters(true)
+            .strict(true);
+        Secret::new(
+            pg.generate_one()
+                .map_err(|_| errors::ApiErrorResponse::InternalServerError)?,
+        )
+    };
+    let password_hash = Argon2
+        .generate_digest(password.peek().as_bytes())
+        .change_context(errors::ApiErrorResponse::ClientSecretInvalid)?;
+    let password_hash = serde_json::to_value(password_hash)
+        .map_err(|_| errors::ApiErrorResponse::InternalServerError)?;
+
+    let user_account = async {
+        Ok(domain::User {
+            id: None,
+            name: domain_types::encrypt(req.name, &key_store.key.peek()).await?,
+            email: req.email.peek().clone(),
+            merchant_id: merchant.merchant_id.clone(),
+            password: domain_types::encrypt(Secret::new(password_hash), &key_store.key.peek())
+                .await?,
+            created_at: date_time::now(),
+        })
+    }
+    .await
+    .change_context(errors::ApiErrorResponse::InternalServerError)?;
+
+    let user = db
+        .insert_user(user_account, &key_store)
+        .await
+        .to_duplicate_response(errors::ApiErrorResponse::DuplicateMerchantAccount)?;
+
+    let user_response = api::UserResponse {
+        name: user.name,
+        email: user.email,
+        merchant_id: user.merchant_id,
+        merchant_account: merchant,
+    };
+    Ok(service_api::ApplicationResponse::Json(user_response))
+}
+
+pub async fn authenticate_user(
+    state: AppState,
+    req: api::UserAuth,
+) -> RouterResponse<api::UserResponse> {
+    let db = state.store.as_ref();
+
+    if let Ok(user) = db.find_user_by_email(req.email.peek().as_str()).await {
+        let password_hash = Argon2
+            .generate_digest(req.password.peek().as_bytes())
+            .change_context(errors::ApiErrorResponse::ClientSecretInvalid)?;
+        let password_hash = serde_json::to_value(password_hash)
+            .map_err(|_| errors::ApiErrorResponse::InternalServerError)?;
+        let key_store = db
+            .get_merchant_key_store_by_merchant_id(
+                &user.merchant_id,
+                &db.get_master_key().to_vec().into(),
+            )
+            .await
+            .to_not_found_response(errors::ApiErrorResponse::InternalServerError)?;
+        let d_password_hash: Encryptable<Secret<serde_json::Value>> = Encryptable::decrypt(
+            user.password,
+            key_store.key.peek(),
+            common_utils::crypto::GcmAes256,
+        )
+        .await
+        .change_context(errors::ApiErrorResponse::InternalServerError)?;
+        if d_password_hash.into_inner().peek().ne(&password_hash) {
+            return Err(errors::ApiErrorResponse::InvalidRequestData {
+                message: "Incorrect email or password".to_string(),
+            }
+            .into());
+        }
+
+        let merchant: api::MerchantAccountResponse = db
+            .find_merchant_account_by_merchant_id(&user.merchant_id, &key_store)
+            .await
+            .to_not_found_response(errors::ApiErrorResponse::MerchantAccountNotFound)?
+            .try_into()
+            .change_context(errors::ApiErrorResponse::InternalServerError)?;
+
+        Ok(service_api::ApplicationResponse::Json(api::UserResponse {
+            name: Encryptable::decrypt(
+                user.name,
+                key_store.key.peek(),
+                common_utils::crypto::GcmAes256,
+            )
+            .await
+            .change_context(errors::ApiErrorResponse::InvalidRequestData {
+                message: "Failed while decrypting user name".to_string(),
+            })?,
+            email: user.email,
+            merchant_id: user.merchant_id,
+            merchant_account: merchant,
+        }))
+    } else {
+        Err(errors::ApiErrorResponse::InvalidRequestData {
+            message: "Incorrect email or password".to_string(),
+        }
+        .into())
+    }
 }
 
 pub async fn create_merchant_account(

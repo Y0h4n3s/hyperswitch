@@ -247,7 +247,7 @@ impl<T: DatabaseStore> PaymentIntentInterface for KVRouterStore<T> {
                 payment.active_attempt = data_models::RemoteStorageObject::Object(pa.clone());
                 Ok(pa)
             }
-            data_models::RemoteStorageObject::Object(pa) => Ok(pa.clone()),
+            data_models::RemoteStorageObject::Object(pa) => Ok(pa),
         }
     }
 

@@ -17,6 +17,7 @@ pub mod redis_conn;
 
 #[derive(Clone)]
 pub struct MockDb {
+    pub users: Arc<Mutex<Vec<store::user::User>>>,
     pub addresses: Arc<Mutex<Vec<store::Address>>>,
     pub configs: Arc<Mutex<Vec<store::Config>>>,
     pub merchant_accounts: Arc<Mutex<Vec<store::MerchantAccount>>>,
@@ -46,6 +47,7 @@ pub struct MockDb {
 impl MockDb {
     pub async fn new(redis: &RedisSettings) -> error_stack::Result<Self, StorageError> {
         Ok(Self {
+            users: Default::default(),
             addresses: Default::default(),
             configs: Default::default(),
             merchant_accounts: Default::default(),

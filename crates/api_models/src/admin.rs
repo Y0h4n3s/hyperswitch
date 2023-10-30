@@ -15,6 +15,46 @@ use crate::{
 };
 
 #[derive(Clone, Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct UserAuth {
+    /// Authenticated user email
+    #[schema(max_length = 255)]
+    pub email: Secret<String>,
+    /// Password for authentication
+    #[schema(max_length = 255)]
+    pub password: Secret<String>,
+}
+#[derive(Clone, Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct UserCreate {
+    /// Full name of the user
+    #[schema(max_length = 255)]
+    pub name: Secret<String>,
+    /// user email
+    #[schema(max_length = 255)]
+    pub email: Secret<String>,
+    /// Password for authentication
+    #[schema(max_length = 255)]
+    pub password: Option<Secret<String>>,
+    /// Associated merchant account details
+    pub merchant_account: MerchantAccountCreate,
+}
+
+#[derive(Clone, Debug, ToSchema, Serialize)]
+pub struct UserResponse {
+    /// Full name of the user
+    #[schema(max_length = 255)]
+    pub name: Encryptable<Secret<String>>,
+    /// user email
+    #[schema(max_length = 255)]
+    pub email: String,
+    #[schema(max_length = 255)]
+    pub merchant_id: String,
+    /// Associated merchant account details
+    pub merchant_account: MerchantAccountResponse,
+}
+
+#[derive(Clone, Debug, Deserialize, ToSchema)]
 pub struct MerchantAccountListRequest {
     pub organization_id: String,
 }

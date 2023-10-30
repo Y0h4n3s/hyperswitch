@@ -3,6 +3,7 @@ use router_env::Flow;
 #[derive(Clone, Debug, strum::Display)]
 #[strum(serialize_all = "snake_case")]
 pub enum ApiIdentifier {
+    UserAccount,
     Payments,
     Refunds,
     Webhooks,
@@ -27,6 +28,7 @@ pub enum ApiIdentifier {
 impl From<Flow> for ApiIdentifier {
     fn from(flow: Flow) -> Self {
         match flow {
+            Flow::UserAccountCreate | Flow::UserAuth => Self::UserAccount,
             Flow::MerchantsAccountCreate
             | Flow::MerchantsAccountRetrieve
             | Flow::MerchantsAccountUpdate

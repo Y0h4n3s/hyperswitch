@@ -8,6 +8,72 @@ use crate::{
     types::api::admin,
 };
 
+/// User Account - Create
+///
+/// Create a new account for a user and attach a merchant account to it.
+#[utoipa::path(
+    post,
+    path = "/users",
+    request_body= MerchantAccountCreate,
+    responses(
+        (status = 200, description = "User Account Created", body = UserResponse),
+        (status = 400, description = "Invalid data")
+    ),
+    tag = "User Account",
+    operation_id = "Create a User Account",
+    security(("admin_api_key" = []))
+)]
+#[instrument(skip_all, fields(flow = ?Flow::UserAccountCreate))]
+pub async fn user_account_create(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    json_payload: web::Json<admin::UserCreate>,
+) -> HttpResponse {
+    let flow = Flow::UserAccountCreate;
+    api::server_wrap(
+        flow,
+        state,
+        &req,
+        json_payload.into_inner(),
+        |state, _, req| create_user_account(state, req),
+        &auth::AdminApiAuth,
+        api_locking::LockAction::NotApplicable,
+    )
+    .await
+}
+/// User Account - Authenticate
+///
+/// Authenticate user.
+#[utoipa::path(
+    post,
+    path = "/users",
+    request_body= MerchantAccountCreate,
+    responses(
+        (status = 200, description = "Successfully authenticated", body = UserResponse),
+        (status = 400, description = "Invalid data")
+    ),
+    tag = "User Account",
+    operation_id = "Authenticate a User",
+    security(("admin_api_key" = []))
+)]
+#[instrument(skip_all, fields(flow = ?Flow::UserAccountCreate))]
+pub async fn login_user(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    json_payload: web::Json<admin::UserAuth>,
+) -> HttpResponse {
+    let flow = Flow::UserAuth;
+    api::server_wrap(
+        flow,
+        state,
+        &req,
+        json_payload.into_inner(),
+        |state, _, req| authenticate_user(state, req),
+        &auth::NoAuth,
+        api_locking::LockAction::NotApplicable,
+    )
+    .await
+}
 /// Merchant Account - Create
 ///
 /// Create a new account for a merchant and the merchant could be a seller or retailer or client who likes to receive and send payments.

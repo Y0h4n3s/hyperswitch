@@ -54,6 +54,10 @@ pub enum Tag {
 /// API Flow
 #[derive(Debug, Display, Clone, PartialEq, Eq)]
 pub enum Flow {
+    /// Authenticate User.
+    UserAuth,
+    /// User account create flow.
+    UserAccountCreate,
     /// Merchants account create flow.
     MerchantsAccountCreate,
     /// Merchants account retrieve flow.

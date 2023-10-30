@@ -861,6 +861,22 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    use diesel::sql_types::*;
+    use crate::enums::diesel_exports::*;
+
+    users (id) {
+        id -> Int4,
+        #[max_length = 255]
+        merchant_id -> Varchar,
+        name -> Bytea,
+        created_at -> Timestamp,
+        #[max_length = 255]
+        email -> Varchar,
+        password -> Bytea,
+    }
+}
+
 diesel::allow_tables_to_appear_in_same_query!(
     address,
     api_keys,
@@ -888,4 +904,5 @@ diesel::allow_tables_to_appear_in_same_query!(
     process_tracker,
     refund,
     reverse_lookup,
+    users,
 );

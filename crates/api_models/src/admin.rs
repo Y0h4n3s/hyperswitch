@@ -39,6 +39,13 @@ pub struct UserCreate {
     /// Associated merchant account details
     pub merchant_account: MerchantAccountCreate,
 }
+#[derive(Clone, Debug, Serialize)]
+pub struct UserJwt {
+    pub merchant_id: String,
+    pub email: String,
+    pub exp: u64
+}
+
 
 #[derive(Clone, Debug, ToSchema, Serialize)]
 pub struct UserResponse {

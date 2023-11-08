@@ -33,6 +33,7 @@ use crate::{
     },
     utils::{self, OptionExt},
 };
+use crate::services::authentication::encode_jwt;
 
 const DEFAULT_ORG_ID: &str = "org_abcdefghijklmn";
 
@@ -171,8 +172,13 @@ pub async fn authenticate_user(
             .to_not_found_response(errors::ApiErrorResponse::MerchantAccountNotFound)?
             .try_into()
             .change_context(errors::ApiErrorResponse::InternalServerError)?;
+        let jwt = encode_jwt(api::UserJwt {
+            merchant_id: merchant.merchant_id.clone(),
+            email: user.email.clone(),
+            exp: 999999999999
+        }, &state).await?;
 
-        Ok(service_api::ApplicationResponse::Json(api::UserResponse {
+        Ok(service_api::ApplicationResponse::JsonWithHeaders((api::UserResponse {
             name: Encryptable::decrypt(
                 user.name,
                 key_store.key.peek(),
@@ -185,7 +191,7 @@ pub async fn authenticate_user(
             email: user.email,
             merchant_id: user.merchant_id,
             merchant_account: merchant,
-        }))
+        }, vec![("Authorization".to_string(), jwt)])))
     } else {
         Err(errors::ApiErrorResponse::InvalidRequestData {
             message: "Incorrect email or password".to_string(),

@@ -46,7 +46,7 @@ pub async fn user_account_create(
 /// Authenticate user.
 #[utoipa::path(
     post,
-    path = "/users",
+    path = "/users/login",
     request_body= MerchantAccountCreate,
     responses(
         (status = 200, description = "Successfully authenticated", body = UserResponse),
@@ -346,14 +346,14 @@ pub async fn payment_connector_list(
 ) -> HttpResponse {
     let flow = Flow::MerchantConnectorsList;
     let merchant_id = path.into_inner();
-
+    let auth: Box<dyn auth::AuthenticateAndFetch<auth::AuthenticationData, _>> = Box::new(auth::JWTAuth);
     api::server_wrap(
         flow,
         state,
         &req,
         merchant_id,
         |state, _, merchant_id| list_payment_connectors(state, merchant_id),
-        &auth::AdminApiAuth,
+        &*auth,
         api_locking::LockAction::NotApplicable,
     )
     .await

@@ -14,7 +14,7 @@ use crate::{
     payment_methods,
 };
 
-#[derive(Clone, Debug, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Deserialize, ToSchema, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct UserAuth {
     /// Authenticated user email
@@ -24,7 +24,7 @@ pub struct UserAuth {
     #[schema(max_length = 255)]
     pub password: Secret<String>,
 }
-#[derive(Clone, Debug, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Deserialize, ToSchema, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct UserCreate {
     /// Full name of the user
@@ -47,7 +47,7 @@ pub struct UserJwt {
 }
 
 
-#[derive(Clone, Debug, ToSchema, Serialize)]
+#[derive(Clone, Debug, Deserialize, ToSchema, Serialize)]
 pub struct UserResponse {
     /// Full name of the user
     #[schema(max_length = 255)]
@@ -61,12 +61,12 @@ pub struct UserResponse {
     pub merchant_account: MerchantAccountResponse,
 }
 
-#[derive(Clone, Debug, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Deserialize, ToSchema, Serialize)]
 pub struct MerchantAccountListRequest {
     pub organization_id: String,
 }
 
-#[derive(Clone, Debug, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Deserialize, ToSchema, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct MerchantAccountCreate {
     /// The identifier for the Merchant Account
@@ -158,7 +158,7 @@ pub struct MerchantAccountMetadata {
     #[serde(flatten)]
     pub data: Option<pii::SecretSerdeValue>,
 }
-#[derive(Clone, Debug, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Deserialize, ToSchema, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct MerchantAccountUpdate {
     /// The identifier for the Merchant Account
@@ -487,72 +487,6 @@ pub mod payout_routing_algorithm {
         D: Deserializer<'a>,
     {
         deserializer.deserialize_option(OptionalRoutingAlgorithmVisitor)
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(tag = "type", content = "data", rename_all = "snake_case")]
-pub enum RoutingAlgorithm {
-    Single(RoutableConnectorChoice),
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(untagged)]
-pub enum RoutableConnectorChoice {
-    ConnectorName(api_enums::RoutableConnectors),
-    ConnectorId {
-        merchant_connector_id: String,
-        connector: api_enums::RoutableConnectors,
-    },
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(
-    tag = "type",
-    content = "data",
-    rename_all = "snake_case",
-    from = "StraightThroughAlgorithmSerde",
-    into = "StraightThroughAlgorithmSerde"
-)]
-pub enum StraightThroughAlgorithm {
-    Single(RoutableConnectorChoice),
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(tag = "type", content = "data", rename_all = "snake_case")]
-pub enum StraightThroughAlgorithmInner {
-    Single(RoutableConnectorChoice),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum StraightThroughAlgorithmSerde {
-    Direct(StraightThroughAlgorithmInner),
-    Nested {
-        algorithm: StraightThroughAlgorithmInner,
-    },
-}
-
-impl From<StraightThroughAlgorithmSerde> for StraightThroughAlgorithm {
-    fn from(value: StraightThroughAlgorithmSerde) -> Self {
-        let inner = match value {
-            StraightThroughAlgorithmSerde::Direct(algorithm) => algorithm,
-            StraightThroughAlgorithmSerde::Nested { algorithm } => algorithm,
-        };
-
-        match inner {
-            StraightThroughAlgorithmInner::Single(conn) => Self::Single(conn),
-        }
-    }
-}
-
-impl From<StraightThroughAlgorithm> for StraightThroughAlgorithmSerde {
-    fn from(value: StraightThroughAlgorithm) -> Self {
-        let inner = match value {
-            StraightThroughAlgorithm::Single(conn) => StraightThroughAlgorithmInner::Single(conn),
-        };
-
-        Self::Nested { algorithm: inner }
     }
 }
 
@@ -1053,7 +987,7 @@ pub enum PayoutStraightThroughAlgorithm {
     Single(api_enums::PayoutConnectors),
 }
 
-#[derive(Clone, Debug, Deserialize, ToSchema, Default)]
+#[derive(Clone, Debug, Deserialize, ToSchema, Default, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct BusinessProfileCreate {
     /// A short name to identify the business profile
@@ -1174,7 +1108,7 @@ pub struct BusinessProfileResponse {
     pub applepay_verified_domains: Option<Vec<String>>,
 }
 
-#[derive(Clone, Debug, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Deserialize, ToSchema, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct BusinessProfileUpdate {
     /// A short name to identify the business profile

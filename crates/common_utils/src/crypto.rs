@@ -445,7 +445,7 @@ pub fn generate_cryptographically_secure_random_bytes<const N: usize>() -> [u8; 
 ///
 /// A wrapper type to store the encrypted data for sensitive pii domain data types
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, masking::Deserialize)]
 pub struct Encryptable<T: Clone> {
     inner: T,
     encrypted: Secret<Vec<u8>, EncryptionStratergy>,
@@ -510,6 +510,7 @@ where
         self.inner.serialize(serializer)
     }
 }
+
 
 impl<T: Clone> PartialEq for Encryptable<T>
 where

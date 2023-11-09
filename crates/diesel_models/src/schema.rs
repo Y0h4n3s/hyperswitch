@@ -938,9 +938,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     process_tracker,
     refund,
     reverse_lookup,
-<<<<<<< HEAD
-=======
     routing_algorithm,
->>>>>>> juspay-main
     users,
 );

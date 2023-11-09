@@ -574,7 +574,7 @@ where
         .change_context(errors::ApiErrorResponse::InvalidJwtToken)
 }
 
-pub async fn encode_jwt<T>(claims: T, state: &impl AppStateInfo) -> RouterResult<String> where T: serde::Serialize {
+pub async fn encode_jwt<T>(claims: T, state: &impl AppStateInfo) -> RouterResult<String> where T: Serialize {
     let conf = state.conf();
     let secret = get_jwt_secret(
         &conf.secrets,

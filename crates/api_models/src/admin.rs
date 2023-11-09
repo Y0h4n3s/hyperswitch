@@ -242,7 +242,7 @@ pub struct MerchantAccountUpdate {
     pub payment_link_config: Option<serde_json::Value>,
 }
 
-#[derive(Clone, Debug, ToSchema, Serialize)]
+#[derive(Clone, Debug, ToSchema, Serialize, Deserialize)]
 pub struct MerchantAccountResponse {
     /// The identifier for the Merchant Account
     #[schema(max_length = 255, example = "y3oqhf46pyzuxjbcn2giaqnb44")]

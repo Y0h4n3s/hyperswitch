@@ -308,6 +308,7 @@ impl From<RoutableConnectorChoice> for ast::ConnectorChoice {
                 RoutableConnectors::Cashtocode => euclid_enums::Connector::Cashtocode,
                 RoutableConnectors::Checkout => euclid_enums::Connector::Checkout,
                 RoutableConnectors::Coinbase => euclid_enums::Connector::Coinbase,
+                RoutableConnectors::Creditbanco => euclid_enums::Connector::Creditbanco,
                 RoutableConnectors::Cryptopay => euclid_enums::Connector::Cryptopay,
                 RoutableConnectors::Cybersource => euclid_enums::Connector::Cybersource,
                 RoutableConnectors::Dlocal => euclid_enums::Connector::Dlocal,

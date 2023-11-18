@@ -346,7 +346,8 @@ pub async fn payment_connector_list(
 ) -> HttpResponse {
     let flow = Flow::MerchantConnectorsList;
     let merchant_id = path.into_inner();
-    let auth: Box<dyn auth::AuthenticateAndFetch<auth::AuthenticationData, _>> = Box::new(auth::JWTAuth);
+    let auth: Box<dyn auth::AuthenticateAndFetch<auth::AuthenticationData, _>> =
+        Box::new(auth::JWTAuth);
     api::server_wrap(
         flow,
         state,

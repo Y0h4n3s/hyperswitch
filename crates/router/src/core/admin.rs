@@ -28,7 +28,7 @@ use crate::{
     },
     db::StorageInterface,
     routes::{metrics, AppState},
-    services::{self, api as service_api},
+    services::{self, api as service_api, authentication::encode_jwt},
     types::{
         self, api,
         domain::{
@@ -40,7 +40,6 @@ use crate::{
     },
     utils::{self, OptionExt},
 };
-use crate::services::authentication::encode_jwt;
 const DEFAULT_ORG_ID: &str = "org_abcdefghijklmn";
 #[inline]
 pub fn create_merchant_publishable_key() -> String {
@@ -177,26 +176,33 @@ pub async fn authenticate_user(
             .to_not_found_response(errors::ApiErrorResponse::MerchantAccountNotFound)?
             .try_into()
             .change_context(errors::ApiErrorResponse::InternalServerError)?;
-        let jwt = encode_jwt(api::UserJwt {
-            merchant_id: merchant.merchant_id.clone(),
-            email: user.email.clone(),
-            exp: 999999999999
-        }, &state).await?;
+        let jwt = encode_jwt(
+            api::UserJwt {
+                merchant_id: merchant.merchant_id.clone(),
+                email: user.email.clone(),
+                exp: 999999999999,
+            },
+            &state,
+        )
+        .await?;
 
-        Ok(service_api::ApplicationResponse::JsonWithHeaders((api::UserResponse {
-            name: Encryptable::decrypt(
-                user.name,
-                key_store.key.peek(),
-                common_utils::crypto::GcmAes256,
-            )
-            .await
-            .change_context(errors::ApiErrorResponse::InvalidRequestData {
-                message: "Failed while decrypting user name".to_string(),
-            })?,
-            email: user.email,
-            merchant_id: user.merchant_id,
-            merchant_account: merchant,
-        }, vec![("Authorization".to_string(), jwt)])))
+        Ok(service_api::ApplicationResponse::JsonWithHeaders((
+            api::UserResponse {
+                name: Encryptable::decrypt(
+                    user.name,
+                    key_store.key.peek(),
+                    common_utils::crypto::GcmAes256,
+                )
+                .await
+                .change_context(errors::ApiErrorResponse::InvalidRequestData {
+                    message: "Failed while decrypting user name".to_string(),
+                })?,
+                email: user.email,
+                merchant_id: user.merchant_id,
+                merchant_account: merchant,
+            },
+            vec![("Authorization".to_string(), jwt)],
+        )))
     } else {
         Err(errors::ApiErrorResponse::InvalidRequestData {
             message: "Incorrect email or password".to_string(),
@@ -1695,6 +1701,10 @@ pub(crate) fn validate_auth_and_metadata_type(
 
         api_enums::Connector::Coinbase => {
             coinbase::transformers::CoinbaseAuthType::try_from(val)?;
+            Ok(())
+        }
+        api_enums::Connector::Creditbanco => {
+            creditbanco::transformers::CreditbancoAuthType::try_from(val)?;
             Ok(())
         }
         api_enums::Connector::Cryptopay => {

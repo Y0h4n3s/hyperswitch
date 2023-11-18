@@ -142,6 +142,7 @@ impl<const T: u8>
 }
 
 default_imp_for_complete_authorize!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Bankofamerica,
@@ -208,6 +209,7 @@ impl<const T: u8>
 {
 }
 default_imp_for_webhook_source_verification!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Airwallex,
@@ -287,6 +289,7 @@ impl<const T: u8>
 }
 
 default_imp_for_create_customer!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Airwallex,
@@ -366,6 +369,7 @@ impl<const T: u8> services::ConnectorRedirectResponse for connector::DummyConnec
 }
 
 default_imp_for_connector_redirect_response!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Bitpay,
@@ -415,6 +419,7 @@ macro_rules! default_imp_for_connector_request_id {
 impl<const T: u8> api::ConnectorTransactionId for connector::DummyConnector<T> {}
 
 default_imp_for_connector_request_id!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Airwallex,
@@ -496,6 +501,7 @@ impl<const T: u8>
 }
 
 default_imp_for_accept_dispute!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Airwallex,
@@ -597,6 +603,7 @@ impl<const T: u8>
 }
 
 default_imp_for_file_upload!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Airwallex,
@@ -675,6 +682,7 @@ impl<const T: u8>
 }
 
 default_imp_for_submit_evidence!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Airwallex,
@@ -753,6 +761,7 @@ impl<const T: u8>
 }
 
 default_imp_for_defend_dispute!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Airwallex,
@@ -832,6 +841,7 @@ impl<const T: u8>
 }
 
 default_imp_for_pre_processing_steps!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Airwallex,
@@ -892,6 +902,7 @@ macro_rules! default_imp_for_payouts {
 impl<const T: u8> api::Payouts for connector::DummyConnector<T> {}
 
 default_imp_for_payouts!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Airwallex,
     connector::Authorizedotnet,
@@ -971,6 +982,7 @@ impl<const T: u8>
 
 #[cfg(feature = "payouts")]
 default_imp_for_payouts_create!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Airwallex,
     connector::Authorizedotnet,
@@ -1053,6 +1065,7 @@ impl<const T: u8>
 
 #[cfg(feature = "payouts")]
 default_imp_for_payouts_eligibility!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Airwallex,
     connector::Authorizedotnet,
@@ -1132,6 +1145,7 @@ impl<const T: u8>
 
 #[cfg(feature = "payouts")]
 default_imp_for_payouts_fulfill!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Airwallex,
     connector::Authorizedotnet,
@@ -1211,6 +1225,7 @@ impl<const T: u8>
 
 #[cfg(feature = "payouts")]
 default_imp_for_payouts_cancel!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Airwallex,
     connector::Authorizedotnet,
@@ -1290,6 +1305,7 @@ impl<const T: u8>
 
 #[cfg(feature = "payouts")]
 default_imp_for_payouts_quote!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Airwallex,
@@ -1370,6 +1386,7 @@ impl<const T: u8>
 
 #[cfg(feature = "payouts")]
 default_imp_for_payouts_recipient!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Airwallex,
@@ -1449,6 +1466,7 @@ impl<const T: u8>
 }
 
 default_imp_for_approve!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Airwallex,
@@ -1529,6 +1547,7 @@ impl<const T: u8>
 }
 
 default_imp_for_reject!(
+    connector::Creditbanco,
     connector::Aci,
     connector::Adyen,
     connector::Airwallex,

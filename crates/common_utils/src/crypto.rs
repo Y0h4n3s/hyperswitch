@@ -511,7 +511,6 @@ where
     }
 }
 
-
 impl<T: Clone> PartialEq for Encryptable<T>
 where
     T: PartialEq,

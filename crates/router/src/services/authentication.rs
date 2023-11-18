@@ -5,7 +5,7 @@ use common_utils::date_time;
 use error_stack::{report, IntoReport, ResultExt};
 #[cfg(feature = "kms")]
 use external_services::kms::{self, decrypt::KmsDecrypt};
-use jsonwebtoken::{decode, encode, Header, Algorithm, DecodingKey, Validation, EncodingKey};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use masking::{PeekInterface, StrongSecret};
 use serde::Serialize;
 
@@ -346,7 +346,7 @@ where
 #[derive(Debug)]
 pub(crate) struct JWTAuth;
 
-#[derive(serde::Deserialize,std::fmt::Debug)]
+#[derive(serde::Deserialize, std::fmt::Debug)]
 struct JwtAuthPayloadFetchUnit {
     #[serde(rename(deserialize = "exp"))]
     _exp: u64,
@@ -375,7 +375,7 @@ struct JwtAuthPayloadFetchMerchantAccount {
     merchant_id: String,
     email: String,
     #[serde(rename(deserialize = "exp"))]
-    _exp: u64
+    _exp: u64,
 }
 
 #[async_trait]
@@ -574,16 +574,19 @@ where
         .change_context(errors::ApiErrorResponse::InvalidJwtToken)
 }
 
-pub async fn encode_jwt<T>(claims: T, state: &impl AppStateInfo) -> RouterResult<String> where T: Serialize {
+pub async fn encode_jwt<T>(claims: T, state: &impl AppStateInfo) -> RouterResult<String>
+where
+    T: Serialize,
+{
     let conf = state.conf();
     let secret = get_jwt_secret(
         &conf.secrets,
         #[cfg(feature = "kms")]
-            kms::get_kms_client(&conf.kms).await,
+        kms::get_kms_client(&conf.kms).await,
     )
-        .await?
-        .peek()
-        .as_bytes();
+    .await?
+    .peek()
+    .as_bytes();
     let key = EncodingKey::from_secret(secret);
     Ok(encode(&Header::default(), &claims, &key).unwrap())
 }

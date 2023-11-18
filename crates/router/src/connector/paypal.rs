@@ -152,13 +152,7 @@ impl ConnectorCommon for Paypal {
         &self,
         auth_type: &types::ConnectorAuthType,
     ) -> CustomResult<Vec<(String, request::Maskable<String>)>, errors::ConnectorError> {
-        let auth: paypal::PaypalAuthType = auth_type
-            .try_into()
-            .change_context(errors::ConnectorError::FailedToObtainAuthType)?;
-        Ok(vec![(
-            headers::AUTHORIZATION.to_string(),
-            auth.api_key.into_masked(),
-        )])
+        Ok(vec![])
     }
 
     fn build_error_response(

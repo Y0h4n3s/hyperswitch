@@ -540,6 +540,8 @@ pub struct SetupMandateRequestData {
 pub struct AccessTokenRequestData {
     pub app_id: Secret<String>,
     pub id: Option<Secret<String>>,
+    pub username: Option<Secret<String>>,
+    pub password: Option<Secret<String>>,
     // Add more keys if required
 }
 
@@ -949,18 +951,26 @@ impl TryFrom<ConnectorAuthType> for AccessTokenRequestData {
             ConnectorAuthType::HeaderKey { api_key } => Ok(Self {
                 app_id: api_key,
                 id: None,
+                username: None,
+                password: None
             }),
             ConnectorAuthType::BodyKey { api_key, key1 } => Ok(Self {
                 app_id: api_key,
                 id: Some(key1),
+                username: None,
+                password: None
             }),
             ConnectorAuthType::SignatureKey { api_key, key1, .. } => Ok(Self {
                 app_id: api_key,
                 id: Some(key1),
+                username: None,
+                password: None
             }),
-            ConnectorAuthType::MultiAuthKey { api_key, key1, .. } => Ok(Self {
+            ConnectorAuthType::MultiAuthKey { api_key, key1, api_secret, key2 } => Ok(Self {
                 app_id: api_key,
                 id: Some(key1),
+                username: Some(api_secret),
+                password: Some(key2)
             }),
 
             _ => Err(errors::ApiErrorResponse::InvalidDataValue {

@@ -18,6 +18,7 @@ mod boku;
 mod cashtocode;
 mod checkout;
 mod coinbase;
+mod creditbanco;
 mod cryptopay;
 mod cybersource;
 mod dlocal;

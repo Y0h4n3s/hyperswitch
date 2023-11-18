@@ -94,6 +94,7 @@ pub enum Connector {
     Cashtocode,
     Checkout,
     Coinbase,
+    Creditbanco,
     Cryptopay,
     Cybersource,
     Dlocal,

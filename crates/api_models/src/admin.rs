@@ -43,9 +43,8 @@ pub struct UserCreate {
 pub struct UserJwt {
     pub merchant_id: String,
     pub email: String,
-    pub exp: u64
+    pub exp: u64,
 }
-
 
 #[derive(Clone, Debug, Deserialize, ToSchema, Serialize)]
 pub struct UserResponse {

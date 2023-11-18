@@ -4,10 +4,8 @@ pub use api_models::admin::{
     MerchantAccountResponse, MerchantAccountUpdate, MerchantConnectorCreate,
     MerchantConnectorDeleteResponse, MerchantConnectorDetails, MerchantConnectorDetailsWrap,
     MerchantConnectorId, MerchantConnectorResponse, MerchantDetails, MerchantId,
-    PaymentMethodsEnabled, PayoutRoutingAlgorithm, PayoutStraightThroughAlgorithm,
-    ToggleKVRequest, ToggleKVResponse, UserAuth,
-    UserCreate, UserResponse, WebhookDetails, UserJwt
-
+    PaymentMethodsEnabled, PayoutRoutingAlgorithm, PayoutStraightThroughAlgorithm, ToggleKVRequest,
+    ToggleKVResponse, UserAuth, UserCreate, UserJwt, UserResponse, WebhookDetails,
 };
 use common_utils::ext_traits::ValueExt;
 use error_stack::ResultExt;

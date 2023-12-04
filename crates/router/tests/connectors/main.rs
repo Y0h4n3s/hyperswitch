@@ -44,6 +44,7 @@ mod opennode;
 mod payeezy;
 mod payme;
 mod paypal;
+mod payrabbit;
 mod payu;
 mod powertranz;
 #[cfg(feature = "dummy_connector")]

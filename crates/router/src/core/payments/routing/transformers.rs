@@ -103,6 +103,7 @@ impl ForeignFrom<api_enums::RoutableConnectors> for dsl_enums::Connector {
             api_enums::RoutableConnectors::Opennode => Self::Opennode,
             api_enums::RoutableConnectors::Payme => Self::Payme,
             api_enums::RoutableConnectors::Paypal => Self::Paypal,
+            api_enums::RoutableConnectors::Payrabbit => Self::Payrabbit,
             api_enums::RoutableConnectors::Payu => Self::Payu,
             api_enums::RoutableConnectors::Powertranz => Self::Powertranz,
             api_enums::RoutableConnectors::Prophetpay => Self::Prophetpay,

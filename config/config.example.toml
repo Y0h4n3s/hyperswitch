@@ -200,6 +200,8 @@ opennode.base_url = "https://dev-api.opennode.com"
 payeezy.base_url = "https://api-cert.payeezy.com/"
 payme.base_url = "https://sandbox.payme.io/"
 paypal.base_url = "https://api-m.sandbox.paypal.com/"
+payrabbit.base_url = "https://merchant-gw-uat.payrabbit.co/"
+payrabbit.secondary_base_url = "https://process-gw-uat.payrabbit.co/"
 payu.base_url = "https://secure.snd.payu.com/"
 powertranz.base_url = "https://staging.ptranz.com/api/"
 prophetpay.base_url = "https://ccm-thirdparty.cps.golf/"
@@ -262,6 +264,7 @@ cards = [
     "helcim",
     "mollie",
     "paypal",
+    "payrabbit",
     "shift4",
     "square",
     "stax",

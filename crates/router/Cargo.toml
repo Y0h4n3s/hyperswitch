@@ -76,6 +76,7 @@ regex = "1.8.4"
 reqwest = { version = "0.11.18", features = ["json", "native-tls", "gzip", "multipart"] }
 ring = "0.16.20"
 roxmltree = "0.18.0"
+rsa = "0.9.5"
 rustc-hash = "1.1.0"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
@@ -84,6 +85,7 @@ serde_qs = { version = "0.12.0", optional = true }
 serde_urlencoded = "0.7.1"
 serde_with = "3.0.0"
 sha-1 = { version = "0.9" }
+sha2 = "0.10.8"
 sqlx = { version = "0.6.3", features = ["postgres", "runtime-actix", "runtime-actix-native-tls", "time", "bigdecimal"] }
 strum = { version = "0.24.1", features = ["derive"] }
 tera = "1.19.1"

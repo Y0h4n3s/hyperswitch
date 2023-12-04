@@ -226,6 +226,7 @@ impl ForeignTryFrom<api_enums::Connector> for api_enums::RoutableConnectors {
             api_enums::Connector::Opennode => Self::Opennode,
             api_enums::Connector::Payme => Self::Payme,
             api_enums::Connector::Paypal => Self::Paypal,
+            api_enums::Connector::Payrabbit => Self::Payrabbit,
             api_enums::Connector::Payu => Self::Payu,
             api_enums::Connector::Plaid => {
                 Err(common_utils::errors::ValidationError::InvalidValue {
@@ -307,6 +308,7 @@ impl ForeignFrom<dsl_enums::Connector> for api_enums::RoutableConnectors {
             dsl_enums::Connector::Opennode => Self::Opennode,
             dsl_enums::Connector::Payme => Self::Payme,
             dsl_enums::Connector::Paypal => Self::Paypal,
+            dsl_enums::Connector::Payrabbit => Self::Payrabbit,
             dsl_enums::Connector::Payu => Self::Payu,
             dsl_enums::Connector::Powertranz => Self::Powertranz,
             dsl_enums::Connector::Prophetpay => Self::Prophetpay,

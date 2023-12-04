@@ -335,6 +335,7 @@ impl From<RoutableConnectorChoice> for ast::ConnectorChoice {
                 RoutableConnectors::Opennode => euclid_enums::Connector::Opennode,
                 RoutableConnectors::Payme => euclid_enums::Connector::Payme,
                 RoutableConnectors::Paypal => euclid_enums::Connector::Paypal,
+                RoutableConnectors::Payrabbit => euclid_enums::Connector::Payrabbit,
                 RoutableConnectors::Payu => euclid_enums::Connector::Payu,
                 RoutableConnectors::Powertranz => euclid_enums::Connector::Powertranz,
                 RoutableConnectors::Prophetpay => euclid_enums::Connector::Prophetpay,

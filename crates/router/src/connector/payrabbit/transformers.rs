@@ -508,3 +508,30 @@ for types::RouterData<F, T, types::AccessToken>
         })
     }
 }
+
+impl TryFrom<&types::PaymentsAuthorizeSessionTokenRouterData> for PayrabbitAuthRequest {
+    type Error = error_stack::Report<errors::ConnectorError>;
+    fn try_from(item: &types::PaymentsAuthorizeSessionTokenRouterData) -> Result<Self, Self::Error> {
+        let auth = PayrabbitAuthType::try_from(&item.connector_auth_type)?;
+        let key_format = format!("{{\"apikey\": \"{}\"}}", auth.api_key.peek());
+        let encoded = consts::BASE64_ENGINE.encode(key_format);
+        Ok(Self {
+            didentity: Secret::new(encoded)
+        })
+    }
+}
+
+impl<F, T> TryFrom<types::ResponseRouterData<F, PayrabbitAuthResponse, T, types::PaymentsResponseData>> for types::RouterData<F, T, types::PaymentsResponseData> {
+    type Error = error_stack::Report<errors::ConnectorError>;
+    fn try_from(
+        item: types::ResponseRouterData<F, PayrabbitAuthResponse, T, types::PaymentsResponseData>,
+    ) -> Result<Self, Self::Error> {
+        Ok(Self {
+            access_token: Some(types::AccessToken {
+                token: item.response.jwt_access,
+                expires: (std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() + 5 * 60) as i64,
+            }),
+            ..item.data
+        })
+    }
+}

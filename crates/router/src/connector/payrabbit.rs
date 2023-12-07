@@ -58,20 +58,29 @@ where
         req: &types::RouterData<Flow, Request, Response>,
         _connectors: &settings::Connectors,
     ) -> CustomResult<Vec<(String, request::Maskable<String>)>, errors::ConnectorError> {
-        let access_token = req
+
+        let mut header = vec![(
+            headers::CONTENT_TYPE.to_string(),
+            self.get_content_type().to_string().into(),
+
+        )];
+        if let Some(access_token) = req
             .access_token
-            .clone()
-            .ok_or(errors::ConnectorError::FailedToObtainAuthType)?;
-        Ok(vec![
-            (
-                headers::CONTENT_TYPE.to_string(),
-                self.get_content_type().to_string().into(),
-            ),
-            (
+            .clone() {
+            header.push((
                 "x-payrabbit-auth".to_string(),
                 format!("{}", access_token.token.peek()).into_masked(),
-            ),
-        ])
+            ))
+
+
+        }else if let Some(session_token) = req.session_token.clone() {
+            header.push((
+                "x-payrabbit-auth".to_string(),
+                format!("{}", session_token).into_masked()
+            ))
+
+        }
+        Ok(header)
     }
 }
 
@@ -181,7 +190,6 @@ impl ConnectorIntegration<api::AccessTokenAuth, types::AccessTokenRequestData, t
                 .body(types::RefreshTokenType::get_request_body(self, req, connectors)?)
                 .build(),
         );
-
         Ok(req)
     }
 
@@ -310,10 +318,159 @@ for Payrabbit
         self.build_error_response(res)
     }
 }
+
+
+impl ConnectorIntegration<api::AuthorizeSessionToken, types::AuthorizeSessionTokenData, types::PaymentsResponseData>
+for Payrabbit {
+    fn get_headers(
+        &self,
+        req: &types::PaymentsAuthorizeSessionTokenRouterData,
+        connectors: &settings::Connectors,
+    ) -> CustomResult<Vec<(String, request::Maskable<String>)>, errors::ConnectorError> {
+        self.build_headers(req, connectors)
+    }
+    fn get_content_type(&self) -> &'static str {
+        "application/json"
+    }
+
+    fn get_url(
+        &self,
+        _req: &types::PaymentsAuthorizeSessionTokenRouterData,
+        connectors: &settings::Connectors,
+    ) -> CustomResult<String, errors::ConnectorError> {
+        Ok(format!("{}auth/commerce/apikey/jwt/new", self.base_url(connectors)))
+    }
+
+    fn get_request_body(
+        &self,
+        req: &types::PaymentsAuthorizeSessionTokenRouterData,
+    _connectors: &settings::Connectors
+    ) -> CustomResult<Option<types::RequestBody>, errors::ConnectorError> {
+        let req_obj = payrabbit::PayrabbitAuthRequest::try_from(req)?;
+        let payrabbit_req = types::RequestBody::log_and_get_request_body(
+            &req_obj,
+            utils::Encode::< payrabbit::PayrabbitAuthRequest>::encode_to_string_of_json,
+        )
+            .change_context(errors::ConnectorError::RequestEncodingFailed)?;
+
+        Ok(Some(payrabbit_req))
+    }
+
+    fn build_request(
+        &self,
+        req: &types::PaymentsAuthorizeSessionTokenRouterData,
+        connectors: &settings::Connectors,
+    ) -> CustomResult<Option<services::Request>, errors::ConnectorError> {
+        let req = Some(
+            services::RequestBuilder::new()
+                .method(services::Method::Post)
+                .headers(types::PaymentsPreAuthorizeType::get_headers(self, req, connectors)?)
+                .url(&types::PaymentsPreAuthorizeType::get_url(self, req, connectors)?)
+                .body(types::PaymentsPreAuthorizeType::get_request_body(self, req, connectors)?)
+                .build(),
+        );
+
+        Ok(req)
+    }
+
+    fn handle_response(
+        &self,
+        data: &types::PaymentsAuthorizeSessionTokenRouterData,
+        res: Response,
+    ) -> CustomResult<types::PaymentsAuthorizeSessionTokenRouterData, errors::ConnectorError> {
+
+        let response: payrabbit::PayrabbitAuthResponse = res
+            .response
+            .parse_struct("Payrabbit PayrabbitAuthResponse")
+            .change_context(errors::ConnectorError::ResponseDeserializationFailed)?;
+
+        types::RouterData::try_from(types::ResponseRouterData {
+            response,
+            data: data.clone(),
+            http_code: res.status_code,
+        })
+    }
+}
+
 #[async_trait::async_trait]
 impl ConnectorIntegration<api::Authorize, types::PaymentsAuthorizeData, types::PaymentsResponseData>
 for Payrabbit
 {
+
+    async fn execute_pretasks(
+        &self,
+        router_data: &mut types::PaymentsAuthorizeRouterData,
+        app_state: &crate::routes::AppState,
+    ) -> CustomResult<(), errors::ConnectorError> {
+        router_data.session_token = match &router_data.session_token {
+            None => {
+                let integ: Box<
+                    &(dyn ConnectorIntegration<
+                        api::AuthorizeSessionToken,
+                        types::AuthorizeSessionTokenData,
+                        types::PaymentsResponseData,
+                    > + Send
+                    + Sync
+                    + 'static),
+                > = Box::new(&Self);
+                let authorize_data = &types::PaymentsAuthorizeSessionTokenRouterData::from((
+                    &router_data.to_owned(),
+                    types::AuthorizeSessionTokenData::from(&router_data),
+                ));
+                let resp = services::execute_connector_processing_step(
+                    app_state,
+                    integ,
+                    authorize_data,
+                    crate::core::payments::CallConnectorAction::Trigger,
+                    None,
+                )
+                    .await?;
+                resp.access_token.and_then(|token| Some(token.token.peek().to_string()))
+            }
+            Some(token) => Some(token.to_string())
+
+        };
+
+        let connector_meta = if let Some(_token) = &router_data.session_token {
+            let integ: Box<
+                &(dyn ConnectorIntegration<
+                    api::InitPayment,
+                    types::PaymentsAuthorizeData,
+                    types::PaymentsResponseData,
+                > + Send
+                + Sync
+                + 'static),
+            > = Box::new(&Self);
+            let init_data = &types::PaymentsInitRouterData::from((
+                &router_data.to_owned(),
+                router_data.request.clone(),
+            ));
+            let init_resp = services::execute_connector_processing_step(
+                app_state,
+                integ,
+                init_data,
+                crate::core::payments::CallConnectorAction::Trigger,
+                None,
+            )
+                .await?;
+            match init_resp.response {
+                Ok(types::PaymentsResponseData::PreProcessingResponse {connector_metadata, ..}) => {
+                    if let Some(meta) = connector_metadata {
+                        Some(common_utils::pii::SecretSerdeValue::new(meta))
+                    } else {
+                        None
+                    }
+                }
+                _ => {
+                    None
+                }
+            }
+        } else {
+            None
+        };
+        router_data.connector_meta_data = connector_meta;
+        Ok(())
+    }
 
 
     fn get_headers(

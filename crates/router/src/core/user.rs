@@ -46,9 +46,9 @@ pub async fn connect_account(
         .err()
         .unwrap_or(false)
     {
-        if matches!(env::which(), env::Env::Production) {
-            return Err(UserErrors::InvalidCredentials).into_report();
-        }
+        // if matches!(env::which(), env::Env::Production) {
+        //     return Err(UserErrors::InvalidCredentials).into_report();
+        // }
 
         let new_user = domain::NewUser::try_from(request)?;
         let _ = new_user

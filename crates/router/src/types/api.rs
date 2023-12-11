@@ -369,6 +369,7 @@ impl ConnectorData {
                 enums::Connector::Cashtocode => Ok(Box::new(&connector::Cashtocode)),
                 enums::Connector::Checkout => Ok(Box::new(&connector::Checkout)),
                 enums::Connector::Coinbase => Ok(Box::new(&connector::Coinbase)),
+                enums::Connector::Creditbanco => Ok(Box::new(&connector::Creditbanco)),
                 enums::Connector::Cryptopay => Ok(Box::new(&connector::Cryptopay)),
                 enums::Connector::Cybersource => Ok(Box::new(&connector::Cybersource)),
                 enums::Connector::Dlocal => Ok(Box::new(&connector::Dlocal)),

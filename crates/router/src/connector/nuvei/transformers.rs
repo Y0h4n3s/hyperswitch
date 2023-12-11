@@ -856,8 +856,9 @@ impl<F>
             | payments::PaymentMethodData::Reward
             | payments::PaymentMethodData::Upi(_)
             | payments::PaymentMethodData::Voucher(_)
-            | api_models::payments::PaymentMethodData::CardRedirect(_)
-            | payments::PaymentMethodData::GiftCard(_) => {
+            | payments::PaymentMethodData::CardRedirect(_)
+            | payments::PaymentMethodData::GiftCard(_)
+            | payments::PaymentMethodData::CardToken(_) => {
                 Err(errors::ConnectorError::NotImplemented(
                     utils::get_unimplemented_payment_method_error_message("nuvei"),
                 )
@@ -999,7 +1000,7 @@ impl From<NuveiCardDetails> for PaymentOption {
         Self {
             card: Some(Card {
                 card_number: Some(card.card_number),
-                card_holder_name: Some(card.card_holder_name),
+                card_holder_name: card.card_holder_name,
                 expiration_month: Some(card.card_exp_month),
                 expiration_year: Some(card.card_exp_year),
                 three_d: card_details.three_d,
@@ -1037,6 +1038,7 @@ impl TryFrom<(&types::PaymentsCompleteAuthorizeRouterData, String)> for NuveiPay
             | Some(api::PaymentMethodData::CardRedirect(..))
             | Some(api::PaymentMethodData::Reward)
             | Some(api::PaymentMethodData::Upi(..))
+            | Some(api::PaymentMethodData::CardToken(..))
             | None => Err(errors::ConnectorError::NotImplemented(
                 utils::get_unimplemented_payment_method_error_message("nuvei"),
             )),
@@ -1450,6 +1452,7 @@ where
                     },
                     network_txn_id: None,
                     connector_response_reference_id: response.order_id,
+                    incremental_authorization_allowed: None,
                 })
             },
             ..item.data

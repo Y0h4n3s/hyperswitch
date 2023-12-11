@@ -58,20 +58,28 @@ impl<Flow, Request, Response> ConnectorCommonExt<Flow, Request, Response> for Cr
         req: &types::RouterData<Flow, Request, Response>,
         _connectors: &settings::Connectors,
     ) -> CustomResult<Vec<(String, request::Maskable<String>)>, errors::ConnectorError> {
-        let access_token = req
+        let mut header = vec![(
+            headers::CONTENT_TYPE.to_string(),
+            self.get_content_type().to_string().into(),
+
+        )];
+        if let Some(access_token) = req
             .access_token
-            .clone()
-            .ok_or(errors::ConnectorError::FailedToObtainAuthType)?;
-        Ok(vec![
-            (
-                headers::CONTENT_TYPE.to_string(),
-                self.get_content_type().to_string().into(),
-            ),
-            (
+            .clone() {
+            header.push((
                 headers::AUTHORIZATION.to_string(),
                 format!("Bearer {}", access_token.token.peek()).into_masked(),
-            ),
-        ])
+            ))
+
+
+        }else if let Some(session_token) = req.session_token.clone() {
+            header.push((
+                headers::AUTHORIZATION.to_string(),
+                format!("Bearer {}", session_token).into_masked()
+            ))
+
+        }
+        Ok(header)
     }
 }
 
@@ -217,9 +225,46 @@ ConnectorIntegration<
 {
 }
 
+#[async_trait::async_trait]
 impl ConnectorIntegration<api::Authorize, types::PaymentsAuthorizeData, types::PaymentsResponseData>
 for Creditbanco
 {
+
+    async fn execute_pretasks(
+        &self,
+        router_data: &mut types::PaymentsAuthorizeRouterData,
+        app_state: &crate::routes::AppState,
+    ) -> CustomResult<(), errors::ConnectorError> {
+        router_data.session_token = match &router_data.session_token {
+            None => {
+                let integ: Box<
+                    &(dyn ConnectorIntegration<
+                        api::AccessTokenAuth,
+                        types::AccessTokenRequestData,
+                        types::AccessToken,
+                    > + Send
+                    + Sync
+                    + 'static),
+                > = Box::new(&Self);
+                let authorize_data = &types::RefreshTokenRouterData::from(
+                    (&router_data, types::AccessTokenRequestData::try_from(router_data.connector_auth_type.clone()).map_err(|e| errors::ConnectorError::RequestEncodingFailed)?));
+                let resp = services::execute_connector_processing_step(
+                    app_state,
+                    integ,
+                    authorize_data,
+                    crate::core::payments::CallConnectorAction::Trigger,
+                    None,
+                )
+                    .await?;
+                resp.access_token.and_then(|token| Some(token.token.peek().to_string()))
+            }
+            Some(token) => Some(token.to_string())
+
+        };
+        Ok(())
+    }
+
+
     fn get_headers(
         &self,
         req: &types::PaymentsAuthorizeRouterData,
@@ -235,16 +280,15 @@ for Creditbanco
     fn get_url(
         &self,
         _req: &types::PaymentsAuthorizeRouterData,
-        _connectors: &settings::Connectors,
+        connectors: &settings::Connectors,
     ) -> CustomResult<String, errors::ConnectorError> {
-        Err(errors::ConnectorError::NotImplemented("get_url method".to_string()).into())
+        Ok(format!("{}credibanco/api/pasarelas/v1/purchase-order", connectors.creditbanco.secondary_base_url.as_ref().unwrap().to_string()))
     }
 
     fn get_request_body(
         &self,
         req: &types::PaymentsAuthorizeRouterData,
-        _connectors: &settings::Connectors
-
+        _connectors: &settings::Connectors,
     ) -> CustomResult<Option<types::RequestBody>, errors::ConnectorError> {
         let connector_router_data = creditbanco::CreditbancoRouterData::try_from((
             &self.get_currency_unit(),
@@ -304,7 +348,6 @@ for Creditbanco
         self.build_error_response(res)
     }
 }
-
 impl ConnectorIntegration<api::PSync, types::PaymentsSyncData, types::PaymentsResponseData>
 for Creditbanco
 {

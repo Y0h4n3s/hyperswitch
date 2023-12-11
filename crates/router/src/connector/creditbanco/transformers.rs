@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use masking::Secret;
 use serde::{Deserialize, Serialize};
 
@@ -122,8 +123,7 @@ impl TryFrom<&types::ConnectorAuthType> for CreditbancoAuthType {
         }
     }
 }
-// PaymentsResponse
-//TODO: Append the remaining status flags
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum CreditbancoPaymentStatus {
@@ -142,12 +142,25 @@ impl From<CreditbancoPaymentStatus> for enums::AttemptStatus {
         }
     }
 }
+impl FromStr for CreditbancoPaymentStatus {
+    type Err = error_stack::Report<errors::ConnectorError>;
+    fn from_str(item: &str) -> Result<Self, Self::Err> {
+        Ok(match item {
+            "00" | "11" | "08" => Self::Succeeded,
+             _ => Self::Failed,
+        })
+    }
+
+}
 
 //TODO: Fill the struct with respective fields
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename="camelCase")]
 pub struct CreditbancoPaymentsResponse {
-    status: CreditbancoPaymentStatus,
-    id: String,
+    state_code: String,
+    authorization_code: String,
+    authorized_amount: u64,
+    transaction_id: String,
 }
 
 impl<F, T>
@@ -165,9 +178,9 @@ TryFrom<
         >,
     ) -> Result<Self, Self::Error> {
         Ok(Self {
-            status: enums::AttemptStatus::from(item.response.status),
+            status: enums::AttemptStatus::from(CreditbancoPaymentStatus::from_str(&item.response.state_code)?),
             response: Ok(types::PaymentsResponseData::TransactionResponse {
-                resource_id: types::ResponseId::ConnectorTransactionId(item.response.id),
+                resource_id: types::ResponseId::ConnectorTransactionId(item.response.transaction_id),
                 redirection_data: None,
                 mandate_reference: None,
                 connector_metadata: None,

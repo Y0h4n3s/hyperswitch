@@ -287,7 +287,6 @@ fn compile_merchant_connector_graph(
             }
         }
     }
-
     let aggregator_info = "Available Payment methods for connector";
     let pms_enabled_agg_id = builder
         .make_any_aggregator(&agg_nodes, Some(aggregator_info), None::<()>, Vec::new())
@@ -308,7 +307,6 @@ fn compile_merchant_connector_graph(
             None::<()>,
         )
         .map_err(KgraphError::GraphConstructionError)?;
-
     builder
         .make_edge(
             pms_enabled_agg_id,

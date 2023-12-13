@@ -2611,7 +2611,7 @@ where
             {
                 routing_data.business_sub_label = choice.sub_label.clone();
             }
-            return Ok(api::ConnectorCallType::PreDetermined(connector_data));
+            return Ok(ConnectorCallType::PreDetermined(connector_data));
         }
     }
 

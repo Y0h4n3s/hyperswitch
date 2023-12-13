@@ -122,9 +122,9 @@ impl ConnectorCommon for Creditbanco {
         Ok(ErrorResponse {
             status_code: res.status_code,
             attempt_status: None,
-            code: response.code,
+            code: response.status.to_string(),
             message: response.message,
-            reason: response.reason,
+            reason: response.error,
             connector_transaction_id: None,
         })
     }
@@ -247,7 +247,7 @@ for Creditbanco
                     + 'static),
                 > = Box::new(&Self);
                 let authorize_data = &types::RefreshTokenRouterData::from(
-                    (&router_data, types::AccessTokenRequestData::try_from(router_data.connector_auth_type.clone()).map_err(|e| errors::ConnectorError::RequestEncodingFailed)?));
+                    (&router_data, types::AccessTokenRequestData::try_from(router_data.connector_auth_type.clone()).map_err(|_| errors::ConnectorError::RequestEncodingFailed)?));
                 let resp = services::execute_connector_processing_step(
                     app_state,
                     integ,
@@ -256,7 +256,7 @@ for Creditbanco
                     None,
                 )
                     .await?;
-                resp.access_token.and_then(|token| Some(token.token.peek().to_string()))
+                resp.response.ok().and_then(|token| Some(token.token.peek().to_string()))
             }
             Some(token) => Some(token.to_string())
 
@@ -302,6 +302,8 @@ for Creditbanco
             utils::Encode::<creditbanco::CreditbancoPaymentsRequest>::encode_to_string_of_json,
         )
             .change_context(errors::ConnectorError::RequestEncodingFailed)?;
+        println!("\n\n\n{:?} {:?}", creditbanco_req.0.peek(), req_obj, );
+
         Ok(Some(creditbanco_req))
     }
 

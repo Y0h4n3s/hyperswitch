@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use rand::Rng;
 use masking::Secret;
 use serde::{Deserialize, Serialize};
 
@@ -47,25 +48,28 @@ pub struct CreditbancoReference {
 
 //TODO: Fill the struct with respective fields
 #[derive(Default, Debug, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct CreditbancoPaymentsRequest {
-    amount: i64,
+    purchase_amount: i64,
+    iva_tax: i64,
     card_data: CreditbancoCard,
     unique_code: String,
     terminal_id: String,
-    references: Vec<CreditbancoReference>,
-    currency_code: u16
+    currency_code: u16,
+    ip_address: String,
+    installments_number: u32,
 
 }
 
 #[derive(Default, Debug, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct CreditbancoCard {
-    name: Secret<String>,
     card_number: cards::CardNumber,
     card_expire_month: Secret<String>,
     card_expire_year: Secret<String>,
     cvv: Secret<String>,
-    brand_id: Secret<u8>,
-    card_account_type_id: Secret<u8>,
+    brand_id: Secret<String>,
+    card_account_type_id: Secret<String>,
 }
 
 impl TryFrom<&CreditbancoRouterData<&types::PaymentsAuthorizeRouterData>>
@@ -78,20 +82,24 @@ for CreditbancoPaymentsRequest
         match item.router_data.request.payment_method_data.clone() {
             api::PaymentMethodData::Card(req_card) => {
                 let card_data = CreditbancoCard {
-                    name: req_card.card_holder_name.ok_or(
-                        errors::ConnectorError::MissingRequiredField { field_name: "card_holder_name"},
-                    )?,
                     card_number: req_card.card_number,
                     card_expire_month: req_card.card_exp_month,
                     card_expire_year: req_card.card_exp_year,
                     cvv: req_card.card_cvc,
-                    brand_id: Default::default(),
-                    card_account_type_id: Default::default(),
+                    brand_id: Secret::new("01".to_string()),
+                    card_account_type_id: Secret::new("01".to_string()),
                 };
+                let mut rng = rand::thread_rng();
+                let p = 10u64.pow(10);
                 Ok(Self {
-                    amount: item.amount.to_owned(),
+                    purchase_amount: item.amount.to_owned(),
+                    unique_code: rng.gen_range(p..10*p).to_string(),
+                    terminal_id: "00004451".to_string(),
+                    iva_tax: 0,
+                    installments_number: 1,
+                    currency_code: item.router_data.request.currency.iso_4217().parse().unwrap(),
+                    ip_address: "192.168.0.1".to_string(),
                     card_data,
-                    ..Default::default()
                 })
             }
             _ => Err(errors::ConnectorError::NotImplemented("Payment methods".to_string()).into()),
@@ -155,7 +163,7 @@ impl FromStr for CreditbancoPaymentStatus {
 
 //TODO: Fill the struct with respective fields
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct CreditbancoPaymentsResponse {
     state_code: String,
     authorization_code: String,
@@ -278,10 +286,11 @@ for types::RefundsRouterData<api::RSync>
 //TODO: Fill the struct with respective fields
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq)]
 pub struct CreditbancoErrorResponse {
-    pub status_code: u16,
-    pub code: String,
+    pub status: u16,
+    pub timestamp: String,
     pub message: String,
-    pub reason: Option<String>,
+    pub error: Option<String>,
+    pub path: Option<String>,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq)]

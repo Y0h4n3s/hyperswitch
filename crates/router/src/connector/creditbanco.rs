@@ -171,13 +171,14 @@ for Creditbanco
 
     ) -> CustomResult<Option<types::RequestBody>, errors::ConnectorError> {
         let req_obj = creditbanco::CreditbancoAuthRequest::try_from(req)?;
-        let paypal_req = types::RequestBody::log_and_get_request_body(
+        let creditbanco_req = types::RequestBody::log_and_get_request_body(
             &req_obj,
             utils::Encode::<creditbanco::CreditbancoAuthRequest>::url_encode,
         )
             .change_context(errors::ConnectorError::RequestEncodingFailed)?;
+        println!("\n\n\n{:?} {:?}", creditbanco_req.0.peek(), req_obj, );
 
-        Ok(Some(paypal_req))
+        Ok(Some(creditbanco_req))
     }
 
     fn build_request(

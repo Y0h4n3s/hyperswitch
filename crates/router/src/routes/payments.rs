@@ -112,7 +112,6 @@ pub async fn payments_create(
     }
 
     let locking_action = payload.get_locking_input(flow.clone());
-
     Box::pin(api::server_wrap(
         flow,
         state,

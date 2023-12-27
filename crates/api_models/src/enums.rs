@@ -110,6 +110,7 @@ pub enum Connector {
     Payme,
     Paypal,
     Payu,
+    Placetopay,
     Powertranz,
     Prophetpay,
     Rapyd,
@@ -127,6 +128,7 @@ pub enum Connector {
     Zen,
     Signifyd,
     Plaid,
+    Riskified,
 }
 
 impl Connector {
@@ -200,6 +202,7 @@ impl From<PayoutConnectors> for RoutableConnectors {
 pub enum FrmConnectors {
     /// Signifyd Risk Manager. Official docs: https://docs.signifyd.com/
     Signifyd,
+    Riskified,
 }
 
 #[cfg(feature = "frm")]
@@ -207,6 +210,7 @@ impl From<FrmConnectors> for RoutableConnectors {
     fn from(value: FrmConnectors) -> Self {
         match value {
             FrmConnectors::Signifyd => Self::Signifyd,
+            FrmConnectors::Riskified => Self::Riskified,
         }
     }
 }

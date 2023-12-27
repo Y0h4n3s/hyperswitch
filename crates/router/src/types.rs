@@ -1219,6 +1219,7 @@ impl From<(&&mut PaymentsAuthorizeRouterData, AccessTokenRequestData)> for Refre
             connector_http_status_code: data.connector_http_status_code,
             external_latency: data.external_latency,
             apple_pay_flow: data.apple_pay_flow.clone(),
+            frm_metadata: None,
         }
     }
 }

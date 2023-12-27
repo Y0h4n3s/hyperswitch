@@ -93,6 +93,7 @@ pub struct ConnectorTomlConfig {
 #[serde_with::skip_serializing_none]
 #[derive(Debug, Deserialize, serde::Serialize, Clone)]
 pub struct ConnectorConfig {
+    pub creditbanco: Option<ConnectorTomlConfig>,
     pub aci: Option<ConnectorTomlConfig>,
     pub adyen: Option<ConnectorTomlConfig>,
     #[cfg(feature = "payouts")]
@@ -196,6 +197,7 @@ impl ConnectorConfig {
     ) -> Result<Option<ConnectorTomlConfig>, String> {
         let connector_data = Self::new()?;
         match connector {
+            Connector::Creditbanco => Ok(connector_data.creditbanco),
             Connector::Aci => Ok(connector_data.aci),
             Connector::Adyen => Ok(connector_data.adyen),
             Connector::Airwallex => Ok(connector_data.airwallex),

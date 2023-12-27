@@ -3,6 +3,7 @@ pub mod transformers;
 use std::fmt::Debug;
 
 use error_stack::{IntoReport, ResultExt};
+use common_utils::request::RequestContent;
 use masking::{PeekInterface};
 use transformers as creditbanco;
 
@@ -20,7 +21,7 @@ use crate::{
         api::{self, ConnectorCommon, ConnectorCommonExt},
         ErrorResponse, Response,
     },
-    utils::{self, BytesExt},
+    utils::{BytesExt},
 };
 
 #[derive(Debug, Clone)]
@@ -169,16 +170,10 @@ for Creditbanco
         req: &types::RefreshTokenRouterData,
         _connectors: &settings::Connectors
 
-    ) -> CustomResult<Option<types::RequestBody>, errors::ConnectorError> {
-        let req_obj = creditbanco::CreditbancoAuthRequest::try_from(req)?;
-        let creditbanco_req = types::RequestBody::log_and_get_request_body(
-            &req_obj,
-            utils::Encode::<creditbanco::CreditbancoAuthRequest>::url_encode,
-        )
-            .change_context(errors::ConnectorError::RequestEncodingFailed)?;
-        println!("\n\n\n{:?} {:?}", creditbanco_req.0.peek(), req_obj, );
+    ) -> CustomResult<RequestContent, errors::ConnectorError> {
 
-        Ok(Some(creditbanco_req))
+        let req_obj = creditbanco::CreditbancoAuthRequest::try_from(req)?;
+        Ok(RequestContent::Json(Box::new(req_obj)))
     }
 
     fn build_request(
@@ -191,7 +186,7 @@ for Creditbanco
                 .method(services::Method::Post)
                 .headers(types::RefreshTokenType::get_headers(self, req, connectors)?)
                 .url(&types::RefreshTokenType::get_url(self, req, connectors)?)
-                .body(types::RefreshTokenType::get_request_body(self, req, connectors)?)
+                .set_body(types::RefreshTokenType::get_request_body(self, req, connectors)?)
                 .build(),
         );
 
@@ -290,7 +285,7 @@ for Creditbanco
         &self,
         req: &types::PaymentsAuthorizeRouterData,
         _connectors: &settings::Connectors,
-    ) -> CustomResult<Option<types::RequestBody>, errors::ConnectorError> {
+    ) -> CustomResult<RequestContent, errors::ConnectorError> {
         let connector_router_data = creditbanco::CreditbancoRouterData::try_from((
             &self.get_currency_unit(),
             req.request.currency,
@@ -298,14 +293,7 @@ for Creditbanco
             req,
         ))?;
         let req_obj = creditbanco::CreditbancoPaymentsRequest::try_from(&connector_router_data)?;
-        let creditbanco_req = types::RequestBody::log_and_get_request_body(
-            &req_obj,
-            utils::Encode::<creditbanco::CreditbancoPaymentsRequest>::encode_to_string_of_json,
-        )
-            .change_context(errors::ConnectorError::RequestEncodingFailed)?;
-        println!("\n\n\n{:?} {:?}", creditbanco_req.0.peek(), req_obj, );
-
-        Ok(Some(creditbanco_req))
+        Ok(RequestContent::Json(Box::new(req_obj)))
     }
 
     fn build_request(
@@ -323,7 +311,7 @@ for Creditbanco
                 .headers(types::PaymentsAuthorizeType::get_headers(
                     self, req, connectors,
                 )?)
-                .body(types::PaymentsAuthorizeType::get_request_body(self, req, connectors)?)
+                .set_body(types::PaymentsAuthorizeType::get_request_body(self, req, connectors)?)
                 .build(),
         ))
     }
@@ -441,7 +429,7 @@ for Creditbanco
         _req: &types::PaymentsCaptureRouterData,
         _connectors: &settings::Connectors
 
-    ) -> CustomResult<Option<types::RequestBody>, errors::ConnectorError> {
+    ) -> CustomResult<RequestContent, errors::ConnectorError> {
         Err(errors::ConnectorError::NotImplemented("get_request_body method".to_string()).into())
     }
 
@@ -458,7 +446,7 @@ for Creditbanco
                 .headers(types::PaymentsCaptureType::get_headers(
                     self, req, connectors,
                 )?)
-                .body(types::PaymentsCaptureType::get_request_body(self, req, connectors)?)
+                .set_body(types::PaymentsCaptureType::get_request_body(self, req, connectors)?)
                 .build(),
         ))
     }
@@ -519,7 +507,7 @@ for Creditbanco
         &self,
         req: &types::RefundsRouterData<api::Execute>,
         _connectors: &settings::Connectors
-    ) -> CustomResult<Option<types::RequestBody>, errors::ConnectorError> {
+    ) -> CustomResult<RequestContent, errors::ConnectorError> {
         let connector_router_data = creditbanco::CreditbancoRouterData::try_from((
             &self.get_currency_unit(),
             req.request.currency,
@@ -527,12 +515,7 @@ for Creditbanco
             req,
         ))?;
         let req_obj = creditbanco::CreditbancoRefundRequest::try_from(&connector_router_data)?;
-        let creditbanco_req = types::RequestBody::log_and_get_request_body(
-            &req_obj,
-            utils::Encode::<creditbanco::CreditbancoRefundRequest>::encode_to_string_of_json,
-        )
-            .change_context(errors::ConnectorError::RequestEncodingFailed)?;
-        Ok(Some(creditbanco_req))
+        Ok(RequestContent::Json(Box::new(req_obj)))
     }
 
     fn build_request(
@@ -547,7 +530,7 @@ for Creditbanco
             .headers(types::RefundExecuteType::get_headers(
                 self, req, connectors,
             )?)
-            .body(types::RefundExecuteType::get_request_body(self, req, connectors)?)
+            .set_body(types::RefundExecuteType::get_request_body(self, req, connectors)?)
             .build();
         Ok(Some(request))
     }
@@ -610,7 +593,7 @@ for Creditbanco
                 .url(&types::RefundSyncType::get_url(self, req, connectors)?)
                 .attach_default_headers()
                 .headers(types::RefundSyncType::get_headers(self, req, connectors)?)
-                .body(types::RefundSyncType::get_request_body(self, req, connectors)?)
+                .set_body(types::RefundSyncType::get_request_body(self, req, connectors)?)
                 .build(),
         ))
     }

@@ -112,7 +112,6 @@ pub async fn payments_create(
     }
 
     let locking_action = payload.get_locking_input(flow.clone());
-
     Box::pin(api::server_wrap(
         flow,
         state,
@@ -124,7 +123,7 @@ pub async fn payments_create(
                 state,
                 auth.merchant_account,
                 auth.key_store,
-                payment_types::HeaderPayload::default(),
+                HeaderPayload::default(),
                 req,
                 api::AuthFlow::Merchant,
             )

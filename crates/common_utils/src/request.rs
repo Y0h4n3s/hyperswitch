@@ -177,7 +177,7 @@ impl Default for RequestBuilder {
 }
 
 #[derive(Clone, Debug)]
-pub struct RequestBody(Secret<String>);
+pub struct RequestBody(pub Secret<String>);
 
 impl RequestBody {
     pub fn log_and_get_request_body<T, F>(

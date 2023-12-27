@@ -578,6 +578,8 @@ pub struct SetupMandateRequestData {
 pub struct AccessTokenRequestData {
     pub app_id: Secret<String>,
     pub id: Option<Secret<String>>,
+    pub username: Option<Secret<String>>,
+    pub password: Option<Secret<String>>,
     // Add more keys if required
 }
 
@@ -1106,18 +1108,31 @@ impl TryFrom<ConnectorAuthType> for AccessTokenRequestData {
             ConnectorAuthType::HeaderKey { api_key } => Ok(Self {
                 app_id: api_key,
                 id: None,
+                username: None,
+                password: None,
             }),
             ConnectorAuthType::BodyKey { api_key, key1 } => Ok(Self {
                 app_id: api_key,
                 id: Some(key1),
+                username: None,
+                password: None,
             }),
             ConnectorAuthType::SignatureKey { api_key, key1, .. } => Ok(Self {
                 app_id: api_key,
                 id: Some(key1),
+                username: None,
+                password: None,
             }),
-            ConnectorAuthType::MultiAuthKey { api_key, key1, .. } => Ok(Self {
+            ConnectorAuthType::MultiAuthKey {
+                api_key,
+                key1,
+                api_secret,
+                key2,
+            } => Ok(Self {
                 app_id: api_key,
                 id: Some(key1),
+                username: Some(api_secret),
+                password: Some(key2),
             }),
 
             _ => Err(errors::ApiErrorResponse::InvalidDataValue {
@@ -1156,6 +1171,54 @@ impl From<&&mut PaymentsAuthorizeRouterData> for AuthorizeSessionTokenData {
             currency: data.request.currency,
             connector_transaction_id: data.payment_id.clone(),
             amount: Some(data.request.amount),
+        }
+    }
+}
+
+impl From<(&&mut PaymentsAuthorizeRouterData, AccessTokenRequestData)> for RefreshTokenRouterData {
+    fn from(item: (&&mut PaymentsAuthorizeRouterData, AccessTokenRequestData)) -> Self {
+        let data = item.0;
+        let request = item.1;
+        Self {
+            flow: PhantomData,
+            request,
+            merchant_id: data.merchant_id.clone(),
+            connector: data.connector.clone(),
+            attempt_id: data.attempt_id.clone(),
+            status: data.status,
+            payment_method: data.payment_method,
+            connector_auth_type: data.connector_auth_type.clone(),
+            description: data.description.clone(),
+            return_url: data.return_url.clone(),
+            address: data.address.clone(),
+            auth_type: data.auth_type,
+            connector_meta_data: data.connector_meta_data.clone(),
+            amount_captured: data.amount_captured,
+            access_token: data.access_token.clone(),
+            response: Ok(AccessToken {
+                token: Secret::new("uninitialized".to_string()),
+                expires: 1000
+            }),
+            payment_method_id: data.payment_method_id.clone(),
+            payment_id: data.payment_id.clone(),
+            session_token: data.session_token.clone(),
+            reference_id: data.reference_id.clone(),
+            customer_id: data.customer_id.clone(),
+            payment_method_token: None,
+            preprocessing_id: None,
+            connector_customer: data.connector_customer.clone(),
+            recurring_mandate_payment_data: data.recurring_mandate_payment_data.clone(),
+            connector_request_reference_id: data.connector_request_reference_id.clone(),
+            #[cfg(feature = "payouts")]
+            payout_method_data: data.payout_method_data.clone(),
+            #[cfg(feature = "payouts")]
+            quote_id: data.quote_id.clone(),
+            test_mode: data.test_mode,
+            payment_method_balance: data.payment_method_balance.clone(),
+            connector_api_version: data.connector_api_version.clone(),
+            connector_http_status_code: data.connector_http_status_code,
+            external_latency: data.external_latency,
+            apple_pay_flow: data.apple_pay_flow.clone(),
         }
     }
 }

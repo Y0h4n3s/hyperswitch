@@ -79,6 +79,7 @@ key1 = "key1"
 
 [mollie]
 api_key = "API Key"
+key1 = "key1"
 
 [forte]
 api_key = "api_key"
@@ -189,6 +190,12 @@ api_key="API Key"
 api_key = "MyApiKey"
 key1 = "Merchant id"
 api_secret = "Secret key"
+
+[creditbanco]
+api_key="purchase"
+key1 = "04f2c8da-6d8f-4ae0-b451-d0e6d21678e9"
+key2 = "C1cl@ue3wQjxDn4v"
+api_secret = "clipclap01"
 
 [placetopay]
 api_key= "Login"

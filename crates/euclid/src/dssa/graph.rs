@@ -666,6 +666,7 @@ impl<'a> KnowledgeGraph<'a> {
         memo: &mut Memoization,
     ) -> Result<(), GraphError> {
         let node = self.nodes.get(node_id).ok_or(GraphError::NodeNotFound)?;
+
         if let Some(already_memo) = memo.get(&(node_id, relation, strength)) {
             already_memo
                 .clone()
@@ -908,7 +909,6 @@ impl<'a> KnowledgeGraph<'a> {
             Strength::Weak,
             memo,
         );
-
         match result {
             Ok(_) => Ok(true),
             Err(e) => {

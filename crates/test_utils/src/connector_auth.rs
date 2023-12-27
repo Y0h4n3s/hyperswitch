@@ -24,6 +24,7 @@ pub struct ConnectorAuthentication {
     pub cashtocode: Option<BodyKey>,
     pub checkout: Option<SignatureKey>,
     pub coinbase: Option<HeaderKey>,
+    pub creditbanco: Option<MultiAuthKey>,
     pub cryptopay: Option<BodyKey>,
     pub cybersource: Option<SignatureKey>,
     pub dlocal: Option<SignatureKey>,

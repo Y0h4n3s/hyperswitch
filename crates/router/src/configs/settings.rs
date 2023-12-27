@@ -589,6 +589,7 @@ pub struct Connectors {
     pub cashtocode: ConnectorParams,
     pub checkout: ConnectorParams,
     pub coinbase: ConnectorParams,
+    pub creditbanco: ConnectorParams,
     pub cryptopay: ConnectorParams,
     pub cybersource: ConnectorParams,
     pub dlocal: ConnectorParams,

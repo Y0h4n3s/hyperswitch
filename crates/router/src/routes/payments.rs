@@ -94,7 +94,7 @@ use crate::{
     operation_id = "Create a Payment",
     security(("api_key" = [])),
 )]
-#[instrument(skip_all, fields(flow = ?Flow::PaymentsCreate))]
+#[instrument(skip_all, fields(flow = ?Flow::PaymentsCreate, payment_id))]
 pub async fn payments_create(
     state: web::Data<app::AppState>,
     req: actix_web::HttpRequest,
@@ -110,6 +110,17 @@ pub async fn payments_create(
     if let Err(err) = get_or_generate_payment_id(&mut payload) {
         return api::log_and_return_error_response(err);
     }
+
+    tracing::Span::current().record(
+        "payment_id",
+        &payload
+            .payment_id
+            .as_ref()
+            .map(|payment_id_type| payment_id_type.get_payment_intent_id())
+            .transpose()
+            .unwrap_or_default()
+            .unwrap_or_default(),
+    );
 
     let locking_action = payload.get_locking_input(flow.clone());
     Box::pin(api::server_wrap(
@@ -158,7 +169,7 @@ pub async fn payments_create(
 //     tag = "Payments",
 //     operation_id = "Start a Redirection Payment"
 // )]
-#[instrument(skip(state, req), fields(flow = ?Flow::PaymentsStart))]
+#[instrument(skip(state, req), fields(flow = ?Flow::PaymentsStart, payment_id))]
 pub async fn payments_start(
     state: web::Data<app::AppState>,
     req: actix_web::HttpRequest,
@@ -173,6 +184,7 @@ pub async fn payments_start(
     };
 
     let locking_action = payload.get_locking_input(flow.clone());
+    tracing::Span::current().record("payment_id", &payment_id);
 
     Box::pin(api::server_wrap(
         flow,
@@ -222,7 +234,7 @@ pub async fn payments_start(
     operation_id = "Retrieve a Payment",
     security(("api_key" = []), ("publishable_key" = []))
 )]
-#[instrument(skip(state, req), fields(flow = ?Flow::PaymentsRetrieve))]
+#[instrument(skip(state, req), fields(flow = ?Flow::PaymentsRetrieve, payment_id))]
 // #[get("/{payment_id}")]
 pub async fn payments_retrieve(
     state: web::Data<app::AppState>,
@@ -240,6 +252,9 @@ pub async fn payments_retrieve(
         expand_captures: json_payload.expand_captures,
         ..Default::default()
     };
+
+    tracing::Span::current().record("payment_id", &path.to_string());
+
     let (auth_type, auth_flow) =
         match auth::check_client_secret_and_get_auth(req.headers(), &payload) {
             Ok(auth) => auth,
@@ -290,7 +305,7 @@ pub async fn payments_retrieve(
     operation_id = "Retrieve a Payment",
     security(("api_key" = []))
 )]
-#[instrument(skip(state, req), fields(flow = ?Flow::PaymentsRetrieve))]
+#[instrument(skip(state, req), fields(flow = ?Flow::PaymentsRetrieve, payment_id))]
 // #[post("/sync")]
 pub async fn payments_retrieve_with_gateway_creds(
     state: web::Data<app::AppState>,
@@ -311,6 +326,8 @@ pub async fn payments_retrieve_with_gateway_creds(
         ..Default::default()
     };
     let flow = Flow::PaymentsRetrieve;
+
+    tracing::Span::current().record("payment_id", &json_payload.payment_id);
 
     let locking_action = payload.get_locking_input(flow.clone());
 
@@ -355,7 +372,7 @@ pub async fn payments_retrieve_with_gateway_creds(
     operation_id = "Update a Payment",
     security(("api_key" = []), ("publishable_key" = []))
 )]
-#[instrument(skip_all, fields(flow = ?Flow::PaymentsUpdate))]
+#[instrument(skip_all, fields(flow = ?Flow::PaymentsUpdate, payment_id))]
 // #[post("/{payment_id}")]
 pub async fn payments_update(
     state: web::Data<app::AppState>,
@@ -371,6 +388,8 @@ pub async fn payments_update(
     };
 
     let payment_id = path.into_inner();
+
+    tracing::Span::current().record("payment_id", &payment_id);
 
     payload.payment_id = Some(payment_types::PaymentIdType::PaymentIntentId(payment_id));
 
@@ -420,7 +439,7 @@ pub async fn payments_update(
     operation_id = "Confirm a Payment",
     security(("api_key" = []), ("publishable_key" = []))
 )]
-#[instrument(skip_all, fields(flow = ?Flow::PaymentsConfirm))]
+#[instrument(skip_all, fields(flow = ?Flow::PaymentsConfirm, payment_id))]
 // #[post("/{payment_id}/confirm")]
 pub async fn payments_confirm(
     state: web::Data<app::AppState>,
@@ -440,6 +459,7 @@ pub async fn payments_confirm(
     }
 
     let payment_id = path.into_inner();
+    tracing::Span::current().record("payment_id", &payment_id);
     payload.payment_id = Some(payment_types::PaymentIdType::PaymentIntentId(payment_id));
     payload.confirm = Some(true);
     let header_payload = match payment_types::HeaderPayload::foreign_try_from(req.headers()) {
@@ -496,7 +516,7 @@ pub async fn payments_confirm(
     operation_id = "Capture a Payment",
     security(("api_key" = []))
 )]
-#[instrument(skip_all, fields(flow = ?Flow::PaymentsCapture))]
+#[instrument(skip_all, fields(flow = ?Flow::PaymentsCapture, payment_id))]
 // #[post("/{payment_id}/capture")]
 pub async fn payments_capture(
     state: web::Data<app::AppState>,
@@ -504,9 +524,12 @@ pub async fn payments_capture(
     json_payload: web::Json<payment_types::PaymentsCaptureRequest>,
     path: web::Path<String>,
 ) -> impl Responder {
+    let payment_id = path.into_inner();
+    tracing::Span::current().record("payment_id", &payment_id);
+
     let flow = Flow::PaymentsCapture;
     let payload = payment_types::PaymentsCaptureRequest {
-        payment_id: path.into_inner(),
+        payment_id,
         ..json_payload.into_inner()
     };
 
@@ -557,7 +580,7 @@ pub async fn payments_capture(
     operation_id = "Create Session tokens for a Payment",
     security(("publishable_key" = []))
 )]
-#[instrument(skip_all, fields(flow = ?Flow::PaymentsSessionToken))]
+#[instrument(skip_all, fields(flow = ?Flow::PaymentsSessionToken, payment_id))]
 pub async fn payments_connector_session(
     state: web::Data<app::AppState>,
     req: actix_web::HttpRequest,
@@ -565,6 +588,8 @@ pub async fn payments_connector_session(
 ) -> impl Responder {
     let flow = Flow::PaymentsSessionToken;
     let payload = json_payload.into_inner();
+
+    tracing::Span::current().record("payment_id", &payload.payment_id);
 
     let locking_action = payload.get_locking_input(flow.clone());
 
@@ -616,7 +641,7 @@ pub async fn payments_connector_session(
 //     tag = "Payments",
 //     operation_id = "Get Redirect Response for a Payment"
 // )]
-#[instrument(skip_all)]
+#[instrument(skip_all, fields(flow = ?Flow::PaymentsRedirect, payment_id))]
 pub async fn payments_redirect_response(
     state: web::Data<app::AppState>,
     req: actix_web::HttpRequest,
@@ -626,6 +651,8 @@ pub async fn payments_redirect_response(
     let flow = Flow::PaymentsRedirect;
     let (payment_id, merchant_id, connector) = path.into_inner();
     let param_string = req.query_string();
+
+    tracing::Span::current().record("payment_id", &payment_id);
 
     let payload = payments::PaymentsRedirectResponseData {
         resource_id: payment_types::PaymentIdType::PaymentIntentId(payment_id),
@@ -675,7 +702,7 @@ pub async fn payments_redirect_response(
 //     tag = "Payments",
 //     operation_id = "Get Redirect Response for a Payment"
 // )]
-#[instrument(skip_all)]
+#[instrument(skip_all, fields(flow = ?Flow::PaymentsRedirect, payment_id))]
 pub async fn payments_redirect_response_with_creds_identifier(
     state: web::Data<app::AppState>,
     req: actix_web::HttpRequest,
@@ -683,6 +710,8 @@ pub async fn payments_redirect_response_with_creds_identifier(
 ) -> impl Responder {
     let (payment_id, merchant_id, connector, creds_identifier) = path.into_inner();
     let param_string = req.query_string();
+
+    tracing::Span::current().record("payment_id", &payment_id);
 
     let payload = payments::PaymentsRedirectResponseData {
         resource_id: payment_types::PaymentIdType::PaymentIntentId(payment_id),
@@ -714,7 +743,7 @@ pub async fn payments_redirect_response_with_creds_identifier(
     )
     .await
 }
-#[instrument(skip_all)]
+#[instrument(skip_all, fields(flow =? Flow::PaymentsRedirect, payment_id))]
 pub async fn payments_complete_authorize(
     state: web::Data<app::AppState>,
     req: actix_web::HttpRequest,
@@ -724,6 +753,8 @@ pub async fn payments_complete_authorize(
     let flow = Flow::PaymentsRedirect;
     let (payment_id, merchant_id, connector) = path.into_inner();
     let param_string = req.query_string();
+
+    tracing::Span::current().record("payment_id", &payment_id);
 
     let payload = payments::PaymentsRedirectResponseData {
         resource_id: payment_types::PaymentIdType::PaymentIntentId(payment_id),
@@ -773,7 +804,7 @@ pub async fn payments_complete_authorize(
     operation_id = "Cancel a Payment",
     security(("api_key" = []))
 )]
-#[instrument(skip_all, fields(flow = ?Flow::PaymentsCancel))]
+#[instrument(skip_all, fields(flow = ?Flow::PaymentsCancel, payment_id))]
 // #[post("/{payment_id}/cancel")]
 pub async fn payments_cancel(
     state: web::Data<app::AppState>,
@@ -784,6 +815,9 @@ pub async fn payments_cancel(
     let flow = Flow::PaymentsCancel;
     let mut payload = json_payload.into_inner();
     let payment_id = path.into_inner();
+
+    tracing::Span::current().record("payment_id", &payment_id);
+
     payload.payment_id = payment_id;
     let locking_action = payload.get_locking_input(flow.clone());
     Box::pin(api::server_wrap(
@@ -918,7 +952,9 @@ pub async fn payments_approve(
 ) -> impl Responder {
     let mut payload = json_payload.into_inner();
     let payment_id = path.into_inner();
+
     tracing::Span::current().record("payment_id", &payment_id);
+
     payload.payment_id = payment_id;
     let flow = Flow::PaymentsApprove;
     let fpayload = FPaymentsApproveRequest(&payload);
@@ -978,7 +1014,9 @@ pub async fn payments_reject(
 ) -> impl Responder {
     let mut payload = json_payload.into_inner();
     let payment_id = path.into_inner();
+
     tracing::Span::current().record("payment_id", &payment_id);
+
     payload.payment_id = payment_id;
     let flow = Flow::PaymentsReject;
     let fpayload = FPaymentsRejectRequest(&payload);
@@ -1119,7 +1157,7 @@ where
     operation_id = "Increment authorized amount for a Payment",
     security(("api_key" = []))
 )]
-#[instrument(skip_all, fields(flow = ?Flow::PaymentsIncrementalAuthorization))]
+#[instrument(skip_all, fields(flow = ?Flow::PaymentsIncrementalAuthorization, payment_id))]
 pub async fn payments_incremental_authorization(
     state: web::Data<app::AppState>,
     req: actix_web::HttpRequest,
@@ -1129,6 +1167,9 @@ pub async fn payments_incremental_authorization(
     let flow = Flow::PaymentsIncrementalAuthorization;
     let mut payload = json_payload.into_inner();
     let payment_id = path.into_inner();
+
+    tracing::Span::current().record("payment_id", &payment_id);
+
     payload.payment_id = payment_id;
     let locking_action = payload.get_locking_input(flow.clone());
     Box::pin(api::server_wrap(
@@ -1229,7 +1270,7 @@ impl GetLockingInput for payment_types::PaymentsRetrieveRequest {
         lock_utils::ApiIdentifier: From<F>,
     {
         match self.resource_id {
-            payment_types::PaymentIdType::PaymentIntentId(ref id) => {
+            payment_types::PaymentIdType::PaymentIntentId(ref id) if self.force_sync => {
                 api_locking::LockAction::Hold {
                     input: api_locking::LockingInput {
                         unique_locking_key: id.to_owned(),

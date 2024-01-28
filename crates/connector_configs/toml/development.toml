@@ -1,6 +1,42 @@
+
 [creditbanco]
-credit = ["Mastercard","Visa","Interac","AmericanExpress","JCB","DinersClub","Discover","CartesBancaires","UnionPay"]
-debit = ["Mastercard","Visa","Interac","AmericanExpress","JCB","DinersClub","Discover","CartesBancaires","UnionPay"]
+[[creditbanco.credit]]
+payment_method_type = "Mastercard"
+[[creditbanco.credit]]
+payment_method_type = "Visa"
+[[creditbanco.credit]]
+payment_method_type = "Interac"
+[[creditbanco.credit]]
+payment_method_type = "AmericanExpress"
+[[creditbanco.credit]]
+payment_method_type = "JCB"
+[[creditbanco.credit]]
+payment_method_type = "DinersClub"
+[[creditbanco.credit]]
+payment_method_type = "Discover"
+[[creditbanco.credit]]
+payment_method_type = "CartesBancaires"
+[[creditbanco.credit]]
+payment_method_type = "UnionPay"
+[[creditbanco.debit]]
+payment_method_type = "Mastercard"
+[[creditbanco.debit]]
+payment_method_type = "Visa"
+[[creditbanco.debit]]
+payment_method_type = "Interac"
+[[creditbanco.debit]]
+payment_method_type = "AmericanExpress"
+[[creditbanco.debit]]
+payment_method_type = "JCB"
+[[creditbanco.debit]]
+payment_method_type = "DinersClub"
+[[creditbanco.debit]]
+payment_method_type = "Discover"
+[[creditbanco.debit]]
+payment_method_type = "CartesBancaires"
+[[creditbanco.debit]]
+payment_method_type = "UnionPay"
+
 [creditbanco.connector_auth.MultiAuthKey]
 api_key="Client ID"
 key1="Client Secret"

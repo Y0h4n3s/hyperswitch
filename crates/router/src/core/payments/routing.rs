@@ -312,7 +312,6 @@ pub fn perform_straight_through_routing<F: Clone>(
     algorithm: &routing_types::StraightThroughAlgorithm,
     payment_data: &payments_oss::PaymentData<F>,
 ) -> RoutingResult<(Vec<routing_types::RoutableConnectorChoice>, bool)> {
-
     Ok(match algorithm {
         routing_types::StraightThroughAlgorithm::Single(conn) => (
             vec![(**conn).clone()],
@@ -565,7 +564,8 @@ async fn perform_kgraph_filtering(
     #[cfg(feature = "business_profile_routing")] profile_id: Option<String>,
 ) -> RoutingResult<Vec<routing_types::RoutableConnectorChoice>> {
     let context = euclid_graph::AnalysisContext::from_dir_values(
-        backend_input.clone()
+        backend_input
+            .clone()
             .into_context()
             .into_report()
             .change_context(errors::RoutingError::KgraphAnalysisError)?,
@@ -583,7 +583,8 @@ async fn perform_kgraph_filtering(
     for choice in chosen {
         let routable_connector = choice.connector;
         let euclid_choice: ast::ConnectorChoice = choice.clone().foreign_into();
-        let dir_val = euclid_choice.clone()
+        let dir_val = euclid_choice
+            .clone()
             .into_dir_value()
             .into_report()
             .change_context(errors::RoutingError::KgraphAnalysisError)?;

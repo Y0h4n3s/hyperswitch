@@ -1359,8 +1359,6 @@ impl From<&&mut PaymentsAuthorizeRouterData> for AuthorizeSessionTokenData {
     }
 }
 
-<<<<<<< HEAD
-=======
 impl From<(&&mut PaymentsAuthorizeRouterData, AccessTokenRequestData)> for RefreshTokenRouterData {
     fn from(item: (&&mut PaymentsAuthorizeRouterData, AccessTokenRequestData)) -> Self {
         let data = item.0;
@@ -1383,7 +1381,7 @@ impl From<(&&mut PaymentsAuthorizeRouterData, AccessTokenRequestData)> for Refre
             access_token: data.access_token.clone(),
             response: Ok(AccessToken {
                 token: Secret::new("uninitialized".to_string()),
-                expires: 1000
+                expires: 1000,
             }),
             payment_method_id: data.payment_method_id.clone(),
             payment_id: data.payment_id.clone(),
@@ -1423,7 +1421,6 @@ impl From<&&mut PaymentsAuthorizeRouterData> for ConnectorCustomerData {
     }
 }
 
->>>>>>> c2d31d7af (wip: add authorize flow for creditbanco)
 impl<F> From<&RouterData<F, PaymentsAuthorizeData, PaymentsResponseData>>
     for PaymentMethodTokenizationData
 {

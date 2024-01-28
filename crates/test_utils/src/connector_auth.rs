@@ -48,6 +48,7 @@ pub struct ConnectorAuthentication {
     pub payeezy: Option<SignatureKey>,
     pub payme: Option<BodyKey>,
     pub paypal: Option<BodyKey>,
+    pub payrabbit: Option<HeaderKey>,
     pub payu: Option<BodyKey>,
     pub placetopay: Option<BodyKey>,
     pub powertranz: Option<BodyKey>,

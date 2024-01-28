@@ -36,6 +36,7 @@ pub mod opennode;
 pub mod payeezy;
 pub mod payme;
 pub mod paypal;
+pub mod payrabbit;
 pub mod payu;
 pub mod placetopay;
 pub mod powertranz;
@@ -66,9 +67,9 @@ pub use self::{
     fiserv::Fiserv, forte::Forte, globalpay::Globalpay, globepay::Globepay, gocardless::Gocardless,
     helcim::Helcim, iatapay::Iatapay, klarna::Klarna, mollie::Mollie, multisafepay::Multisafepay,
     nexinets::Nexinets, nmi::Nmi, noon::Noon, nuvei::Nuvei, opayo::Opayo, opennode::Opennode,
-    payeezy::Payeezy, payme::Payme, paypal::Paypal, payu::Payu, placetopay::Placetopay,
-    powertranz::Powertranz, prophetpay::Prophetpay, rapyd::Rapyd, riskified::Riskified,
-    shift4::Shift4, signifyd::Signifyd, square::Square, stax::Stax, stripe::Stripe,
-    trustpay::Trustpay, tsys::Tsys, volt::Volt, wise::Wise, worldline::Worldline,
+    payeezy::Payeezy, payme::Payme, paypal::Paypal, payrabbit::Payrabbit, payu::Payu,
+    placetopay::Placetopay, powertranz::Powertranz, prophetpay::Prophetpay, rapyd::Rapyd,
+    riskified::Riskified, shift4::Shift4, signifyd::Signifyd, square::Square, stax::Stax,
+    stripe::Stripe, trustpay::Trustpay, tsys::Tsys, volt::Volt, wise::Wise, worldline::Worldline,
     worldpay::Worldpay, zen::Zen,
 };

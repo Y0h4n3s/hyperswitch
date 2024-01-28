@@ -1,13 +1,14 @@
 use std::str::FromStr;
-use rand::Rng;
+
 use masking::Secret;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    connector::utils::AccessTokenRequestInfo,
     core::errors,
     types::{self, api, storage::enums},
 };
-use crate::connector::utils::AccessTokenRequestInfo;
 
 //TODO: Fill the struct with respective fields
 pub struct CreditbancoRouterData<T> {
@@ -16,12 +17,12 @@ pub struct CreditbancoRouterData<T> {
 }
 
 impl<T>
-TryFrom<(
-    &types::api::CurrencyUnit,
-    types::storage::enums::Currency,
-    i64,
-    T,
-)> for CreditbancoRouterData<T>
+    TryFrom<(
+        &types::api::CurrencyUnit,
+        types::storage::enums::Currency,
+        i64,
+        T,
+    )> for CreditbancoRouterData<T>
 {
     type Error = error_stack::Report<errors::ConnectorError>;
     fn try_from(
@@ -43,7 +44,7 @@ TryFrom<(
 #[derive(Default, Debug, Serialize, Eq, PartialEq)]
 pub struct CreditbancoReference {
     reference_key: String,
-    reference_description: String
+    reference_description: String,
 }
 
 //TODO: Fill the struct with respective fields
@@ -58,7 +59,6 @@ pub struct CreditbancoPaymentsRequest {
     currency_code: u16,
     ip_address: String,
     installments_number: u32,
-
 }
 
 #[derive(Default, Debug, Serialize, Eq, PartialEq)]
@@ -73,7 +73,7 @@ pub struct CreditbancoCard {
 }
 
 impl TryFrom<&CreditbancoRouterData<&types::PaymentsAuthorizeRouterData>>
-for CreditbancoPaymentsRequest
+    for CreditbancoPaymentsRequest
 {
     type Error = error_stack::Report<errors::ConnectorError>;
     fn try_from(
@@ -93,11 +93,17 @@ for CreditbancoPaymentsRequest
                 let p = 10u64.pow(10);
                 Ok(Self {
                     purchase_amount: item.amount.to_owned(),
-                    unique_code: rng.gen_range(p..10*p).to_string(),
+                    unique_code: rng.gen_range(p..10 * p).to_string(),
                     terminal_id: "00004451".to_string(),
                     iva_tax: 0,
                     installments_number: 1,
-                    currency_code: item.router_data.request.currency.iso_4217().parse().unwrap(),
+                    currency_code: item
+                        .router_data
+                        .request
+                        .currency
+                        .iso_4217()
+                        .parse()
+                        .unwrap(),
                     ip_address: "192.168.0.1".to_string(),
                     card_data,
                 })
@@ -114,14 +120,18 @@ pub struct CreditbancoAuthType {
     pub(super) client_secret: Secret<String>,
     pub(super) username: Secret<String>,
     pub(super) password: Secret<String>,
-
 }
 
 impl TryFrom<&types::ConnectorAuthType> for CreditbancoAuthType {
     type Error = error_stack::Report<errors::ConnectorError>;
     fn try_from(auth_type: &types::ConnectorAuthType) -> Result<Self, Self::Error> {
         match auth_type {
-            types::ConnectorAuthType::MultiAuthKey { api_key, key1, api_secret, key2 } => Ok(Self {
+            types::ConnectorAuthType::MultiAuthKey {
+                api_key,
+                key1,
+                api_secret,
+                key2,
+            } => Ok(Self {
                 client_id: api_key.to_owned(),
                 client_secret: key1.to_owned(),
                 username: api_secret.to_owned(),
@@ -155,10 +165,9 @@ impl FromStr for CreditbancoPaymentStatus {
     fn from_str(item: &str) -> Result<Self, Self::Err> {
         Ok(match item {
             "00" | "11" | "08" => Self::Succeeded,
-             _ => Self::Failed,
+            _ => Self::Failed,
         })
     }
-
 }
 
 //TODO: Fill the struct with respective fields
@@ -172,9 +181,9 @@ pub struct CreditbancoPaymentsResponse {
 }
 
 impl<F, T>
-TryFrom<
-    types::ResponseRouterData<F, CreditbancoPaymentsResponse, T, types::PaymentsResponseData>,
-> for types::RouterData<F, T, types::PaymentsResponseData>
+    TryFrom<
+        types::ResponseRouterData<F, CreditbancoPaymentsResponse, T, types::PaymentsResponseData>,
+    > for types::RouterData<F, T, types::PaymentsResponseData>
 {
     type Error = error_stack::Report<errors::ConnectorError>;
     fn try_from(
@@ -186,9 +195,13 @@ TryFrom<
         >,
     ) -> Result<Self, Self::Error> {
         Ok(Self {
-            status: enums::AttemptStatus::from(CreditbancoPaymentStatus::from_str(&item.response.state_code)?),
+            status: enums::AttemptStatus::from(CreditbancoPaymentStatus::from_str(
+                &item.response.state_code,
+            )?),
             response: Ok(types::PaymentsResponseData::TransactionResponse {
-                resource_id: types::ResponseId::ConnectorTransactionId(item.response.transaction_id),
+                resource_id: types::ResponseId::ConnectorTransactionId(
+                    item.response.transaction_id,
+                ),
                 redirection_data: None,
                 mandate_reference: None,
                 connector_metadata: None,
@@ -250,7 +263,7 @@ pub struct RefundResponse {
 }
 
 impl TryFrom<types::RefundsResponseRouterData<api::Execute, RefundResponse>>
-for types::RefundsRouterData<api::Execute>
+    for types::RefundsRouterData<api::Execute>
 {
     type Error = error_stack::Report<errors::ConnectorError>;
     fn try_from(
@@ -267,7 +280,7 @@ for types::RefundsRouterData<api::Execute>
 }
 
 impl TryFrom<types::RefundsResponseRouterData<api::RSync, RefundResponse>>
-for types::RefundsRouterData<api::RSync>
+    for types::RefundsRouterData<api::RSync>
 {
     type Error = error_stack::Report<errors::ConnectorError>;
     fn try_from(
@@ -297,7 +310,7 @@ pub struct CreditbancoErrorResponse {
 pub enum CreditbancoAuthGrantType {
     #[default]
     #[serde(rename = "password")]
-    Password
+    Password,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq)]
@@ -313,11 +326,19 @@ impl TryFrom<&types::RefreshTokenRouterData> for CreditbancoAuthRequest {
     type Error = error_stack::Report<errors::ConnectorError>;
     fn try_from(item: &types::RefreshTokenRouterData) -> Result<Self, Self::Error> {
         Ok(Self {
-            username: item.request.username.clone().unwrap_or(Secret::new("".to_string())),
-            password: item.request.password.clone().unwrap_or(Secret::new("".to_string())),
+            username: item
+                .request
+                .username
+                .clone()
+                .unwrap_or(Secret::new("".to_string())),
+            password: item
+                .request
+                .password
+                .clone()
+                .unwrap_or(Secret::new("".to_string())),
             grant_type: CreditbancoAuthGrantType::Password,
             client_id: item.request.app_id.clone(),
-            client_secret:  item.get_request_id()?,
+            client_secret: item.get_request_id()?,
         })
     }
 }
@@ -332,7 +353,7 @@ pub struct CreditbancoAuthResponse {
 }
 
 impl<F, T> TryFrom<types::ResponseRouterData<F, CreditbancoAuthResponse, T, types::AccessToken>>
-for types::RouterData<F, T, types::AccessToken>
+    for types::RouterData<F, T, types::AccessToken>
 {
     type Error = error_stack::Report<errors::ConnectorError>;
     fn try_from(

@@ -1,4 +1,45 @@
 
+[payrabbit]
+[[payrabbit.credit]]
+payment_method_type = "Mastercard"
+[[payrabbit.credit]]
+payment_method_type = "Visa"
+[[payrabbit.credit]]
+payment_method_type = "Interac"
+[[payrabbit.credit]]
+payment_method_type = "AmericanExpress"
+[[payrabbit.credit]]
+payment_method_type = "JCB"
+[[payrabbit.credit]]
+payment_method_type = "DinersClub"
+[[payrabbit.credit]]
+payment_method_type = "Discover"
+[[payrabbit.credit]]
+payment_method_type = "CartesBancaires"
+[[payrabbit.credit]]
+payment_method_type = "UnionPay"
+[[payrabbit.debit]]
+payment_method_type = "Mastercard"
+[[payrabbit.debit]]
+payment_method_type = "Visa"
+[[payrabbit.debit]]
+payment_method_type = "Interac"
+[[payrabbit.debit]]
+payment_method_type = "AmericanExpress"
+[[payrabbit.debit]]
+payment_method_type = "JCB"
+[[payrabbit.debit]]
+payment_method_type = "DinersClub"
+[[payrabbit.debit]]
+payment_method_type = "Discover"
+[[payrabbit.debit]]
+payment_method_type = "CartesBancaires"
+[[payrabbit.debit]]
+payment_method_type = "UnionPay"
+
+[payrabbit.connector_auth.HeaderKey]
+api_key="API Key"
+
 [creditbanco]
 [[creditbanco.credit]]
 payment_method_type = "Mastercard"

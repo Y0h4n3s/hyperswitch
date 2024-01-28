@@ -45,6 +45,7 @@ mod opennode;
 mod payeezy;
 mod payme;
 mod paypal;
+mod payrabbit;
 mod payu;
 mod placetopay;
 mod powertranz;

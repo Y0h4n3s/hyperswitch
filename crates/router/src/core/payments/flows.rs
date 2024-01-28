@@ -2297,5 +2297,6 @@ default_imp_for_revoking_mandates!(
     connector::Wise,
     connector::Worldline,
     connector::Worldpay,
-    connector::Zen
+    connector::Zen,
+    connector::Creditbanco
 );
